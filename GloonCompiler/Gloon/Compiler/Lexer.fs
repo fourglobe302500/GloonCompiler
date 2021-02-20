@@ -1,29 +1,7 @@
 ﻿module Gloon.Compiler.Lexer
 
 open System
-open System.Collections
-
-type Token = {Position: int
-              Text:     string
-              Kind:     TokenKind}
-
-and TokenKind =
-    | NumberLiteral of int
-    | Identifier of string
-    | WhiteSpaceToken of string
-    | EndOfFileToken
-    | InvallidToken
-    | IncrementToken
-    | PlusToken
-    | DecrementToken
-    | MinusToken
-    | PowerToken
-    | StartToken
-    | RootToken
-    | SlashToken
-    | ModulosToken
-    | OpenParenToken
-    | CloseParenToken
+open Gloon.Compiler.Types
 
 let consume f current next constructor =
     while f (current ()) do
@@ -38,8 +16,8 @@ let Lexer (s: string) =
         else s.[position + x]
     let inline current () = peek 0
     let inline lookAhead () = peek 1
-    let text start = s.[start..position - start]
-    let newToken start tokenKind = {Position=position; Text=text start; Kind=tokenKind}
+    let text start = s.[start..position - 1]
+    let newToken start tokenKind = Token (start, text start, tokenKind)
     let move x = position <- position + x; position - x
     let next () =
         position <- position + 1
@@ -51,7 +29,7 @@ let Lexer (s: string) =
             consume Char.IsNumber current next (fun () ->
                 let res = ref 0
                 Int32.TryParse (text start, res) |> ignore
-                newToken start (TokenKind.NumberLiteral res.Value))
+                newToken start (TokenKind.NumberLiteralToken res.Value))
         | w when Char.IsWhiteSpace w ->
             consume Char.IsWhiteSpace current next (fun () ->
                 newToken start (TokenKind.WhiteSpaceToken (text start)))

@@ -6,7 +6,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Lexer.fs" />
+        <Compile Include="Gloon\Compiler\Types.fs" />
+        <Compile Include="Gloon\Compiler\Parser.fs" />
+        <Compile Include="Gloon\Compiler\Lexer.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 </Project>
