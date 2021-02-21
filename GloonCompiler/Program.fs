@@ -1,23 +1,46 @@
 ﻿open System
 open Gloon.Compiler.Lexer
 open Gloon.Compiler.Parser
-open Gloon.Compiler.Types
+open Gloon.Evaluation.Evaluator
+open Gloon.Types
 
-let mutable Break = true
+let mutable Break = false
+let mutable AST = false
 
 let rec prettyPrint indent first last (node: Node) =
-    printfn "%s%s%O" indent (if first then "" else if last then "└──" else "├──") node
+    printfn "%s%s%O" indent (if first then "" else if last then "└── " else "├── ") node
     let lastNode = node.getChildren() |> List.tryLast
     node.getChildren () |>
-    List.iter (fun n -> prettyPrint (indent + (if not last then "│  " else if first then "" else "   ")) false (n = lastNode.Value) n)
+    List.iter (fun n -> prettyPrint (indent + (if not last then "│   " else if first then "" else "    ")) false (n = lastNode.Value) n)
 
-while Break do
+let Process line =
+    line |> Lexer |> Parser |> fun (tree: AST) ->
+            if AST then Node.AST tree |> prettyPrint "" true true
+            if tree.Diagnostics.Length > 0
+            then
+                Console.ForegroundColor <- ConsoleColor.Red
+                tree.Diagnostics |> List.iter (printfn "%s")
+            else
+                Console.ForegroundColor <- ConsoleColor.Gray
+                tree.Root |> Evaluate |> printfn "%i"
+
+let Sudo =
+    function
+    | "#cls" -> Console.Clear ()
+    | "#quit" -> Break <- true
+    | "#AST" ->
+        AST <- not AST
+        printfn "%s AST" (if AST then "Showing" else "Hiding")
+    | _ -> printfn "invallid Command"
+
+while not Break do
     Console.ForegroundColor <- ConsoleColor.Cyan
     printf "> "
     Console.ForegroundColor <- ConsoleColor.White
     Console.ReadLine()
     |> fun line ->
         if String.IsNullOrEmpty line
-        then Break <- false
-        else
-            Lexer line |> Parser |> fun node -> Node.Expression node |> prettyPrint "" true true
+        then Break <- true
+        elif line.StartsWith '#'
+        then line |> Sudo
+        else line |> Process 
