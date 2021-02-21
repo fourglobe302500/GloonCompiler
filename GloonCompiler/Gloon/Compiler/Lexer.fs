@@ -1,7 +1,7 @@
 ﻿module Gloon.Compiler.Lexer
 
 open System
-open Gloon.Compiler.Types
+open Gloon.Types
 
 let consume f current next constructor =
     while f (current ()) do
@@ -10,51 +10,61 @@ let consume f current next constructor =
 
 let Lexer (s: string) =
     let mutable position = 0
+    let mutable diagnostics = []
+
     let peek x =
         if position + x >= s.Length
         then char 0
         else s.[position + x]
     let inline current () = peek 0
     let inline lookAhead () = peek 1
-    let text start = s.[start..position - 1]
-    let newToken start tokenKind = Token (start, text start, tokenKind)
-    let move x = position <- position + x; position - x
-    let next () =
-        position <- position + 1
-    let nextToken () : Token =
+
+    let inline text start = s.[start..position - 1]
+    let inline newToken start tokenKind value = Token (start, text start, tokenKind, value)
+
+    let inline move x = position <- position + x; position - x
+    let inline next () = move 1 |> ignore
+
+    let NextToken () : Token =
         let start = position
         match current () with
-        | _ when position >= s.Length -> newToken (move 1) TokenKind.EndOfFileToken
+        | _ when position >= s.Length -> newToken (move 1) TokenKind.EndOfFileToken (Obj null)
         | n when Char.IsNumber n ->
             consume Char.IsNumber current next (fun () ->
                 let res = ref 0
-                Int32.TryParse (text start, res) |> ignore
-                newToken start (TokenKind.NumberLiteralToken res.Value))
+                if not (Int32.TryParse (text start, res))
+                then
+                    diagnostics <- diagnostics @ [$"GLOON::COMPILER::LEXER Invalid Int32 '{text start}' at: {position}"]
+                    newToken start (NumberLiteralToken 0) (Obj null)
+                else newToken start (TokenKind.NumberLiteralToken res.Value) (Int res.Value))
         | w when Char.IsWhiteSpace w ->
             consume Char.IsWhiteSpace current next (fun () ->
-                newToken start (TokenKind.WhiteSpaceToken (text start)))
-        | '+' when lookAhead () = '+' -> newToken (move 2) TokenKind.IncrementToken
-        | '+' -> newToken (move 1) TokenKind.PlusToken
-        | '-' when lookAhead () = '-' -> newToken (move 2) TokenKind.DecrementToken
-        | '-' -> newToken (move 1) TokenKind.MinusToken
-        | '*' when lookAhead () = '*' -> newToken (move 2) TokenKind.PowerToken
-        | '*' -> newToken (move 1) TokenKind.StartToken
-        | '/' when lookAhead () = '/' -> newToken (move 2) TokenKind.RootToken
-        | '/' -> newToken (move 1) TokenKind.SlashToken
-        | '(' -> newToken (move 1) TokenKind.OpenParenToken
-        | ')' -> newToken (move 1) TokenKind.CloseParenToken
-        | '%' -> newToken (move 1) TokenKind.ModulosToken
+                newToken start (TokenKind.WhiteSpaceToken (text start)) (Obj null))
+        | '+' when lookAhead () = '+' -> newToken (move 2) TokenKind.IncrementToken (Obj null)
+        | '+' -> newToken (move 1) TokenKind.PlusToken (Obj null)
+        | '-' when lookAhead () = '-' -> newToken (move 2) TokenKind.DecrementToken (Obj null)
+        | '-' -> newToken (move 1) TokenKind.MinusToken (Obj null)
+        | '*' when lookAhead () = '*' -> newToken (move 2) TokenKind.PowerToken (Obj null)
+        | '*' -> newToken (move 1) TokenKind.StarToken (Obj null)
+        | '/' when lookAhead () = '/' -> newToken (move 2) TokenKind.RootToken (Obj null)
+        | '/' -> newToken (move 1) TokenKind.SlashToken (Obj null)
+        | '(' -> newToken (move 1) TokenKind.OpenParenToken (Obj null)
+        | ')' -> newToken (move 1) TokenKind.CloseParenToken (Obj null)
+        | '%' -> newToken (move 1) TokenKind.ModulosToken (Obj null)
         | l when Char.IsLetter l ->
             consume Char.IsLetter current next (fun () ->
-                newToken start (TokenKind.Identifier (text start)))
+                newToken start (TokenKind.Identifier (text start)) (Obj null))
         | _ ->
             next()
-            newToken start TokenKind.InvallidToken
+            diagnostics <- diagnostics @ [$"GLOON::COMPILER::LEXER Invalid Token '{text start}' at: {position - 1}."]
+            newToken start TokenKind.InvallidToken (Obj null)
     let mutable Break = false
     let mutable tokens : Token list = []
     while not Break do
-        let token = nextToken()
+        let token = NextToken()
         if token.Kind <> TokenKind.EndOfFileToken
         then tokens <- tokens @ [token]
-        else ((Break <- true)|>ignore)
-    tokens
+        else
+            tokens <- tokens @ [token]
+            ((Break <- true)|>ignore)
+    (tokens,diagnostics)
