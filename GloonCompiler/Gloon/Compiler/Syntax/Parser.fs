@@ -31,30 +31,31 @@ module Parser =
                 diagnostics.Add($"GLOON::COMPILER::PARSER Unnexpected Token <{(current()).Kind}> expexted <{kind}> at: {(current ()).Position}.")
                 Token ((Next ()).Position,"",kind, (Obj null))
 
+        let GetBinaryOperatorPrecedence = function
+            | TokenKind.PowerToken -> (3, true)
+            | TokenKind.ModulosToken -> (3, true)
+            | TokenKind.StarToken -> (2, false)
+            | TokenKind.SlashToken -> (2, false)
+            | TokenKind.MinusToken -> (1, false)
+            | TokenKind.PlusToken -> (1, false)
+            | _ -> (0, false)
+
         let rec ParsePrimaryExpression () =
             match (current ()).Kind with
             | TokenKind.NumberLiteralToken n -> Expression.LiteralExpression (Match (TokenKind.NumberLiteralToken n))
-            | TokenKind.OpenParenToken -> Expression.ParenthesysExpression (Next (), ParseTerm (), Match TokenKind.CloseParenToken)
+            | TokenKind.OpenParenToken -> Expression.ParenthesysExpression (Next (), ParseExpression 0, Match TokenKind.CloseParenToken)
             | _ ->
                 diagnostics.Add($"GLOON::COMPILER::PARSER Invallid Token <{(current ()).Kind}> at: {(current ()).Position}.")
                 Expression.ErrorExpression (Next())
 
-        and ParseExponential () =
+        and ParseExpression parentPrecedence =
             let mutable left = ParsePrimaryExpression ()
-            while (current ()).Kind = TokenKind.PowerToken || (current ()).Kind = TokenKind.ModulosToken do
-                left <- Expression.BinaryExpression (left, Next (), ParsePrimaryExpression ())
+            let mutable Break = false
+            while not Break do
+                let (precedence, right) = (current ()).Kind |> GetBinaryOperatorPrecedence
+                if precedence = 0 || (if right then precedence < parentPrecedence else precedence <= parentPrecedence)
+                then Break <- true
+                else left <- Expression.BinaryExpression (left, Next (), ParseExpression precedence)
             left
 
-        and ParseFactor () =
-            let mutable left = ParseExponential ()
-            while (current ()).Kind = TokenKind.StarToken || (current ()).Kind = TokenKind.SlashToken do
-                left <- Expression.BinaryExpression (left, Next (), ParseExponential ())
-            left
-
-        and ParseTerm () =
-            let mutable left = ParseFactor ()
-            while (current ()).Kind = TokenKind.PlusToken || (current ()).Kind = TokenKind.MinusToken do
-                left <- Expression.BinaryExpression (left, Next (), ParseFactor ())
-            left
-
-        AST (ParseTerm(), Match(TokenKind.EndOfFileToken), diagnostics.ToArray() |> Array.toList)
+        AST (ParseExpression 0, Match(TokenKind.EndOfFileToken), diagnostics.ToArray() |> Array.toList)
