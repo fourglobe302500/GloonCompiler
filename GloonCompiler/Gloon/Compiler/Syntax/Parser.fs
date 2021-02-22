@@ -55,4 +55,4 @@ module Parser =
                 else left <- Expression.BinaryExpression (left, Next (), ParseBinaryExpression precedence)
             left
 
-        AST (ParseBinaryExpression 0, Match(TokenKind.EndOfFileToken), diagnostics.ToArray() |> Array.toList)
+        CST (ParseBinaryExpression 0, Match(TokenKind.EndOfFileToken), diagnostics.ToArray() |> Array.toList)

@@ -9,19 +9,19 @@ module Types =
     type Node =
         | Expression    of Expression
         | Token         of Token
-        | AST           of AST
+        | CST           of CST
 
         member this.getChildren () = this |> function
             | Node.Expression   e -> e.getChildren()
             | Node.Token        _ -> []
-            | Node.AST          t -> t.getChildren()
+            | Node.CST          t -> t.getChildren()
 
         override this.ToString () = this |> function
             | Node.Expression   e -> e.ToString ()
             | Node.Token        t -> t.ToString ()
-            | Node.AST          _ -> "AbstractSyntaxTree"
+            | Node.CST          _ -> "AbstractSyntaxTree"
 
-    and AST (root: Expression, endOfFileToken: Token, diagnostics: string list) =
+    and CST (root: Expression, endOfFileToken: Token, diagnostics: string list) =
         let root = root
         let endOfFileToken = endOfFileToken
         let diagnostics = diagnostics

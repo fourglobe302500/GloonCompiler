@@ -7,7 +7,7 @@ open Gloon.Types
 //https://connelhooley.uk/blog/2017/04/30/f-sharp-to-c-sharp
 
 let mutable Break = false
-let mutable AST = false
+let mutable CST = false
 
 let rec prettyPrint indent first last (node: Node) =
     printfn "%s%s%O" indent (if first then "" else if last then "└── " else "├── ") node
@@ -16,8 +16,8 @@ let rec prettyPrint indent first last (node: Node) =
     List.iter (fun n -> prettyPrint (indent + (if not last then "│   " else if first then "" else "    ")) false (n = lastNode.Value) n)
 
 let Process line =
-    line |> Lexer |> Parser |> fun (tree: AST) ->
-            if AST then Node.AST tree |> prettyPrint "" true true
+    line |> Lexer |> Parser |> fun (tree: CST) ->
+            if CST then Node.CST tree |> prettyPrint "" true true
             if tree.Diagnostics.Length > 0
             then
                 Console.ForegroundColor <- ConsoleColor.Red
@@ -30,9 +30,9 @@ let Sudo =
     function
     | "#cls" -> Console.Clear ()
     | "#quit" -> Break <- true
-    | "#AST" ->
-        AST <- not AST
-        printfn "%s AST" (if AST then "Showing" else "Hiding")
+    | "#CST" ->
+        CST <- not CST
+        printfn "%s Concrete Syntax Tree" (if CST then "Showing" else "Hiding")
     | _ -> printfn "invallid Command"
 
 while not Break do
