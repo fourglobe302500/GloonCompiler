@@ -11,17 +11,15 @@ module Types =
         | Token         of Token
         | AST           of AST
 
-        member this.getChildren () =
-            match this with
-            | Expression e -> e.getChildren()
-            | Token _ -> []
-            | AST t -> t.getChildren()
+        member this.getChildren () = this |> function
+            | Node.Expression   e -> e.getChildren()
+            | Node.Token        _ -> []
+            | Node.AST          t -> t.getChildren()
 
-        override this.ToString () =
-            match this with
-            | Expression e -> e.ToString ()
-            | Token t -> t.ToString ()
-            | AST _ -> "AbstractSyntaxTree"
+        override this.ToString () = this |> function
+            | Node.Expression   e -> e.ToString ()
+            | Node.Token        t -> t.ToString ()
+            | Node.AST          _ -> "AbstractSyntaxTree"
 
     and AST (root: Expression, endOfFileToken: Token, diagnostics: string list) =
         let root = root
@@ -64,24 +62,22 @@ module Types =
         | CloseParenToken
 
     and Expression =
-        | ParenthesysExpression of OpenParen: Token * Expr: Expression * CloseParen: Token
-        | NumberExpression      of NumberToken: Token
-        | BinaryExpression      of Left: Expression * Operator: Token * Right: Expression
-        | UnaryExpression       of Operator: Token * Operand: Expression
+        | ParenthesysExpression of OpenParen: Token   * Expr: Expression   * CloseParen: Token
+        | LiteralExpression     of NumberToken: Token
+        | BinaryExpression      of Left: Expression   * Operator: Token    * Right: Expression
+        | UnaryExpression       of Operator: Token   * Operand: Expression
         | ErrorExpression       of Error: Token
 
-        member this.getChildren () : Node list =
-            match this with
-            | NumberExpression n                        -> [Node.Token n                                                       ]
-            | ParenthesysExpression (op, e, cp)         -> [Node.Token op;        Node.Expression e;      Node.Token cp        ]
-            | BinaryExpression (left, operator, right)  -> [Node.Expression left; Node.Token operator;    Node.Expression right]
-            | UnaryExpression  (operator, operand)      -> [Node.Token operator;  Node.Expression operand                      ]
-            | ErrorExpression  e                        -> [Node.Token e                                                       ]
+        member this.getChildren () = this |> function
+            | Expression.LiteralExpression                      n -> [Node.Token n                                                       ]
+            | Expression.ParenthesysExpression        (op, e, cp) -> [Node.Token op;        Node.Expression e;      Node.Token cp        ]
+            | Expression.BinaryExpression (left, operator, right) -> [Node.Expression left; Node.Token operator;    Node.Expression right]
+            | Expression.UnaryExpression      (operator, operand) -> [Node.Token operator;  Node.Expression operand                      ]
+            | Expression.ErrorExpression                        e -> [Node.Token e                                                       ]
 
-        override this.ToString () =
-            match this with
-            | NumberExpression      _ -> "NumberExpression"
-            | ParenthesysExpression _ -> "ParenthesisedExpression"
-            | BinaryExpression      _ -> "BinaryExpression"
-            | UnaryExpression       _ -> "UnaryExpression"
-            | ErrorExpression       _ -> "ErrorExpression"
+        override this.ToString () = this |> function
+            | Expression.LiteralExpression      _ -> "NumberExpression"
+            | Expression.ParenthesysExpression  _ -> "ParenthesisedExpression"
+            | Expression.BinaryExpression       _ -> "BinaryExpression"
+            | Expression.UnaryExpression        _ -> "UnaryExpression"
+            | Expression.ErrorExpression        _ -> "ErrorExpression"

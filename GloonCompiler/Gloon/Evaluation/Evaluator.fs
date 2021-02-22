@@ -4,9 +4,8 @@ module Evaluator =
 
     open Gloon.Types
 
-    let rec Evaluate (root: Expression) =
-        root |> function
-        | Expression.NumberExpression n ->
+    let rec Evaluate = function
+        | Expression.LiteralExpression n ->
             n.Value |> function
             | io.Int v -> v
             | _ -> 0

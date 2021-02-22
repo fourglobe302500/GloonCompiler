@@ -33,7 +33,7 @@ module Parser =
 
         let rec ParsePrimaryExpression () =
             match (current ()).Kind with
-            | TokenKind.NumberLiteralToken n -> Expression.NumberExpression (Match (TokenKind.NumberLiteralToken n))
+            | TokenKind.NumberLiteralToken n -> Expression.LiteralExpression (Match (TokenKind.NumberLiteralToken n))
             | TokenKind.OpenParenToken -> Expression.ParenthesysExpression (Next (), ParseTerm (), Match TokenKind.CloseParenToken)
             | _ ->
                 diagnostics.Add($"GLOON::COMPILER::PARSER Invallid Token <{(current ()).Kind}> at: {(current ()).Position}.")
