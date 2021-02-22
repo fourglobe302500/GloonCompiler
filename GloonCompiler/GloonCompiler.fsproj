@@ -7,6 +7,7 @@
 
     <ItemGroup>
         <Compile Include="Gloon\Types.fs" />
+        <Compile Include="Gloon\Compiler\Syntax\Facts.fs" />
         <Compile Include="Gloon\Compiler\Syntax\Lexer.fs" />
         <Compile Include="Gloon\Compiler\Syntax\Parser.fs" />
         <Compile Include="Gloon\Evaluation\Evaluator.fs" />

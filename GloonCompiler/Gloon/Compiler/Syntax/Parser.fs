@@ -3,6 +3,7 @@
 module Parser =
 
     open Gloon.Types
+    open Gloon.Compiler.Syntax.Facts
 
     let Parser (tokens_: Token list, diagnostics_: string list) =
         let tokens = tokens_ |> Seq.filter (fun t ->
@@ -31,15 +32,6 @@ module Parser =
                 diagnostics.Add($"GLOON::COMPILER::PARSER Unnexpected Token <{(current()).Kind}> expexted <{kind}> at: {(current ()).Position}.")
                 Token ((Next ()).Position,"",kind, (Obj null))
 
-        let GetBinaryOperatorPrecedence = function
-            | TokenKind.PowerToken -> (3, true)
-            | TokenKind.ModulosToken -> (3, true)
-            | TokenKind.StarToken -> (2, false)
-            | TokenKind.SlashToken -> (2, false)
-            | TokenKind.MinusToken -> (1, false)
-            | TokenKind.PlusToken -> (1, false)
-            | _ -> (0, false)
-
         let rec ParsePrimaryExpression () =
             match (current ()).Kind with
             | TokenKind.NumberLiteralToken n -> Expression.LiteralExpression (Match (TokenKind.NumberLiteralToken n))
@@ -52,7 +44,7 @@ module Parser =
             let mutable left = ParsePrimaryExpression ()
             let mutable Break = false
             while not Break do
-                let (precedence, right) = (current ()).Kind |> GetBinaryOperatorPrecedence
+                let (precedence, right) = (current ()).Kind.GetBinaryOperatorPrecedence
                 if precedence = 0 || (if right then precedence < parentPrecedence else precedence <= parentPrecedence)
                 then Break <- true
                 else left <- Expression.BinaryExpression (left, Next (), ParseExpression precedence)
