@@ -411,3 +411,4 @@ MigrationBackup/
 
 # Dev running snnipet
 *.ps1
+*.cmd

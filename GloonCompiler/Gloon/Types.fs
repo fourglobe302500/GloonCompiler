@@ -1,85 +1,87 @@
-﻿module Gloon.Types
+﻿namespace Gloon
 
-let third (_,_,c) = c
+module Types =
 
-type io = Int of int | Obj of obj
+    let third (_,_,c) = c
 
-type Node =
-    | Expression    of Expression
-    | Token         of Token
-    | AST           of AST
+    type io = Int of int | Obj of obj
 
-    member this.getChildren () =
-        match this with
-        | Expression e -> e.getChildren()
-        | Token _ -> []
-        | AST t -> t.getChildren()
+    type Node =
+        | Expression    of Expression
+        | Token         of Token
+        | AST           of AST
 
-    override this.ToString () =
-        match this with
-        | Expression e -> e.ToString ()
-        | Token t -> t.ToString ()
-        | AST _ -> "AbstractSyntaxTree"
+        member this.getChildren () =
+            match this with
+            | Expression e -> e.getChildren()
+            | Token _ -> []
+            | AST t -> t.getChildren()
 
-and AST (root: Expression, endOfFileToken: Token, diagnostics: string list) =
-    let root = root
-    let endOfFileToken = endOfFileToken
-    let diagnostics = diagnostics
+        override this.ToString () =
+            match this with
+            | Expression e -> e.ToString ()
+            | Token t -> t.ToString ()
+            | AST _ -> "AbstractSyntaxTree"
 
-    member _.Root = root
-    member _.EndOfFileToken = endOfFileToken
-    member _.Diagnostics = diagnostics
-    member a.getChildren () = [Node.Expression root; Node.Token endOfFileToken]
+    and AST (root: Expression, endOfFileToken: Token, diagnostics: string list) =
+        let root = root
+        let endOfFileToken = endOfFileToken
+        let diagnostics = diagnostics
 
-and Token (position_: int, text_: string, kind_: TokenKind, value: io) =
-    let position = position_
-    let text = text_
-    let kind = kind_
-    let mutable value = value
+        member _.Root = root
+        member _.EndOfFileToken = endOfFileToken
+        member _.Diagnostics = diagnostics
+        member a.getChildren () = [Node.Expression root; Node.Token endOfFileToken]
 
-    override _.ToString () = kind.ToString()
-    member _.Position = position
-    member _.Text = text
-    member _.Kind = kind
-    member _.Value = value
+    and Token (position_: int, text_: string, kind_: TokenKind, value: io) =
+        let position = position_
+        let text = text_
+        let kind = kind_
+        let mutable value = value
 
-and TokenKind =
-    | NumberLiteralToken    of int
-    | Identifier            of string
-    | WhiteSpaceToken       of string
-    | EndOfFileToken
-    | InvallidToken
-    | IncrementToken
-    | PlusToken
-    | DecrementToken
-    | MinusToken
-    | PowerToken
-    | StarToken
-    | RootToken
-    | SlashToken
-    | ModulosToken
-    | OpenParenToken
-    | CloseParenToken
+        override _.ToString () = kind.ToString()
+        member _.Position = position
+        member _.Text = text
+        member _.Kind = kind
+        member _.Value = value
 
-and Expression =
-    | ParenthesysExpression of OpenParen: Token * Expr: Expression * CloseParen: Token
-    | NumberExpression      of NumberToken: Token
-    | BinaryExpression      of Left: Expression * Operator: Token * Right: Expression
-    | UnaryExpression       of Operator: Token * Operand: Expression
-    | ErrorExpression       of Error: Token
+    and TokenKind =
+        | NumberLiteralToken    of int
+        | Identifier            of string
+        | WhiteSpaceToken       of string
+        | EndOfFileToken
+        | InvallidToken
+        | IncrementToken
+        | PlusToken
+        | DecrementToken
+        | MinusToken
+        | PowerToken
+        | StarToken
+        | RootToken
+        | SlashToken
+        | ModulosToken
+        | OpenParenToken
+        | CloseParenToken
 
-    member this.getChildren () : Node list =
-        match this with
-        | NumberExpression n                        -> [Node.Token n                                                       ]
-        | ParenthesysExpression (op, e, cp)         -> [Node.Token op;        Node.Expression e;      Node.Token cp        ]
-        | BinaryExpression (left, operator, right)  -> [Node.Expression left; Node.Token operator;    Node.Expression right]
-        | UnaryExpression  (operator, operand)      -> [Node.Token operator;  Node.Expression operand                      ]
-        | ErrorExpression  e                        -> [Node.Token e                                                       ]
+    and Expression =
+        | ParenthesysExpression of OpenParen: Token * Expr: Expression * CloseParen: Token
+        | NumberExpression      of NumberToken: Token
+        | BinaryExpression      of Left: Expression * Operator: Token * Right: Expression
+        | UnaryExpression       of Operator: Token * Operand: Expression
+        | ErrorExpression       of Error: Token
 
-    override this.ToString () =
-        match this with
-        | NumberExpression      _ -> "NumberExpression"
-        | ParenthesysExpression _ -> "ParenthesisedExpression"
-        | BinaryExpression      _ -> "BinaryExpression"
-        | UnaryExpression       _ -> "UnaryExpression"
-        | ErrorExpression       _ -> "ErrorExpression"
+        member this.getChildren () : Node list =
+            match this with
+            | NumberExpression n                        -> [Node.Token n                                                       ]
+            | ParenthesysExpression (op, e, cp)         -> [Node.Token op;        Node.Expression e;      Node.Token cp        ]
+            | BinaryExpression (left, operator, right)  -> [Node.Expression left; Node.Token operator;    Node.Expression right]
+            | UnaryExpression  (operator, operand)      -> [Node.Token operator;  Node.Expression operand                      ]
+            | ErrorExpression  e                        -> [Node.Token e                                                       ]
+
+        override this.ToString () =
+            match this with
+            | NumberExpression      _ -> "NumberExpression"
+            | ParenthesysExpression _ -> "ParenthesisedExpression"
+            | BinaryExpression      _ -> "BinaryExpression"
+            | UnaryExpression       _ -> "UnaryExpression"
+            | ErrorExpression       _ -> "ErrorExpression"
