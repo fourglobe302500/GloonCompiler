@@ -7,8 +7,8 @@
 
     <ItemGroup>
         <Compile Include="Gloon\Types.fs" />
-        <Compile Include="Gloon\Compiler\Lexer.fs" />
-        <Compile Include="Gloon\Compiler\Parser.fs" />
+        <Compile Include="Gloon\Compiler\Syntax\Lexer.fs" />
+        <Compile Include="Gloon\Compiler\Syntax\Parser.fs" />
         <Compile Include="Gloon\Evaluation\Evaluator.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>

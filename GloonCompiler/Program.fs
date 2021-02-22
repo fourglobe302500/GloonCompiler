@@ -1,6 +1,6 @@
 ﻿open System
-open Gloon.Compiler.Lexer
-open Gloon.Compiler.Parser
+open Gloon.Compiler.Syntax.Lexer
+open Gloon.Compiler.Syntax.Parser
 open Gloon.Evaluation.Evaluator
 open Gloon.Types
 

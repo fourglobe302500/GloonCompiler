@@ -1,4 +1,4 @@
-﻿namespace Gloon.Compiler
+﻿namespace Gloon.Compiler.Syntax
 
 module Parser =
 
