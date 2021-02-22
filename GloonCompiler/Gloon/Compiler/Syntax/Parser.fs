@@ -35,19 +35,24 @@ module Parser =
         let rec ParsePrimaryExpression () =
             match (current ()).Kind with
             | TokenKind.NumberLiteralToken n -> Expression.LiteralExpression (Match (TokenKind.NumberLiteralToken n))
-            | TokenKind.OpenParenToken -> Expression.ParenthesysExpression (Next (), ParseExpression 0, Match TokenKind.CloseParenToken)
+            | TokenKind.OpenParenToken -> Expression.ParenthesysExpression (Next (), ParseBinaryExpression 0, Match TokenKind.CloseParenToken)
             | _ ->
                 diagnostics.Add($"GLOON::COMPILER::PARSER Invallid Token <{(current ()).Kind}> at: {(current ()).Position}.")
                 Expression.ErrorExpression (Next())
 
-        and ParseExpression parentPrecedence =
-            let mutable left = ParsePrimaryExpression ()
+        and ParseUnaryExpression () =
+            if (current ()).Kind.UnaryOperatorPrecedence > 0
+            then Expression.UnaryExpression(Next (), ParseUnaryExpression ())
+            else ParsePrimaryExpression ()
+
+        and ParseBinaryExpression parentPrecedence =
+            let mutable left = ParseUnaryExpression ()
             let mutable Break = false
             while not Break do
-                let (precedence, right) = (current ()).Kind.GetBinaryOperatorPrecedence
+                let (precedence, right) = (current ()).Kind.BinaryOperatorPrecedence
                 if precedence = 0 || (if right then precedence < parentPrecedence else precedence <= parentPrecedence)
                 then Break <- true
-                else left <- Expression.BinaryExpression (left, Next (), ParseExpression precedence)
+                else left <- Expression.BinaryExpression (left, Next (), ParseBinaryExpression precedence)
             left
 
-        AST (ParseExpression 0, Match(TokenKind.EndOfFileToken), diagnostics.ToArray() |> Array.toList)
+        AST (ParseBinaryExpression 0, Match(TokenKind.EndOfFileToken), diagnostics.ToArray() |> Array.toList)
