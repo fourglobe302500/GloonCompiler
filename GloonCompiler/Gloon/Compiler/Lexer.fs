@@ -10,7 +10,7 @@ let consume f current next constructor =
 
 let Lexer (s: string) =
     let mutable position = 0
-    let mutable diagnostics = []
+    let diagnostics = ResizeArray ()
 
     let peek x =
         if position + x >= s.Length
@@ -34,7 +34,7 @@ let Lexer (s: string) =
                 let res = ref 0
                 if not (Int32.TryParse (text start, res))
                 then
-                    diagnostics <- diagnostics @ [$"GLOON::COMPILER::LEXER Invalid Int32 '{text start}' at: {position}"]
+                    diagnostics.Add ($"GLOON::COMPILER::LEXER Invalid Int32 '{text start}' at: {position}")
                     newToken start (NumberLiteralToken 0) (Obj null)
                 else newToken start (TokenKind.NumberLiteralToken res.Value) (Int res.Value))
         | w when Char.IsWhiteSpace w ->
@@ -56,15 +56,13 @@ let Lexer (s: string) =
                 newToken start (TokenKind.Identifier (text start)) (Obj null))
         | _ ->
             next()
-            diagnostics <- diagnostics @ [$"GLOON::COMPILER::LEXER Invalid Token '{text start}' at: {position - 1}."]
+            diagnostics.Add($"GLOON::COMPILER::LEXER Invalid Token '{text start}' at: {position - 1}.")
             newToken start TokenKind.InvallidToken (Obj null)
     let mutable Break = false
-    let mutable tokens : Token list = []
+    let tokens = ResizeArray ()
     while not Break do
         let token = NextToken()
-        if token.Kind <> TokenKind.EndOfFileToken
-        then tokens <- tokens @ [token]
-        else
-            tokens <- tokens @ [token]
-            ((Break <- true)|>ignore)
-    (tokens,diagnostics)
+        tokens.Add (token)
+        if token.Kind = TokenKind.EndOfFileToken
+        then Break <- true
+    (tokens.ToArray() |> Array.toList,diagnostics.ToArray() |> Array.toList)

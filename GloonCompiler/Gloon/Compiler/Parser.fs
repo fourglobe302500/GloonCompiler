@@ -7,7 +7,7 @@ let Parser (tokens_: Token list, diagnostics_: string list) =
         match t.Kind with
         | TokenKind.WhiteSpaceToken _ -> false
         | _ -> true) |> List.ofSeq
-    let mutable diagnostics = diagnostics_
+    let diagnostics = ResizeArray(diagnostics_)
     let mutable position = 0
 
     let peek x =
@@ -26,7 +26,7 @@ let Parser (tokens_: Token list, diagnostics_: string list) =
         match (current ()).Kind with
         | k when k = kind -> Next()
         | _ ->
-            diagnostics <- diagnostics @ [$"GLOON::COMPILER::PARSER Unnexpected Token <{(current()).Kind}> expexted <{kind}> at: {(current ()).Position}."]
+            diagnostics.Add($"GLOON::COMPILER::PARSER Unnexpected Token <{(current()).Kind}> expexted <{kind}> at: {(current ()).Position}.")
             Token ((Next ()).Position,"",kind, (Obj null))
 
     let rec ParsePrimaryExpression () =
@@ -34,7 +34,7 @@ let Parser (tokens_: Token list, diagnostics_: string list) =
         | TokenKind.NumberLiteralToken n -> Expression.NumberExpression (Match (TokenKind.NumberLiteralToken n))
         | TokenKind.OpenParenToken -> Expression.ParenthesysExpression (Next (), ParseTerm (), Match TokenKind.CloseParenToken)
         | _ ->
-            diagnostics <- diagnostics @ [$"GLOON::COMPILER::PARSER Invallid Token <{(current ()).Kind}> at: {(current ()).Position}."]
+            diagnostics.Add($"GLOON::COMPILER::PARSER Invallid Token <{(current ()).Kind}> at: {(current ()).Position}.")
             Expression.ErrorExpression (Next())
 
     and ParseExponential () =
@@ -55,4 +55,4 @@ let Parser (tokens_: Token list, diagnostics_: string list) =
             left <- Expression.BinaryExpression (left, Next (), ParseFactor ())
         left
 
-    AST (ParseTerm(), Match(TokenKind.EndOfFileToken), diagnostics)
+    AST (ParseTerm(), Match(TokenKind.EndOfFileToken), diagnostics.ToArray() |> Array.toList)
