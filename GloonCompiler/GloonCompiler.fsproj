@@ -1,16 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
+        <OutputType>Library</OutputType>
         <TargetFramework>.net5</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Gloon\Types.fs" />
+        <Compile Include="Gloon\Compiler\Syntax\Types.fs" />
         <Compile Include="Gloon\Compiler\Syntax\Facts.fs" />
         <Compile Include="Gloon\Compiler\Syntax\Lexer.fs" />
         <Compile Include="Gloon\Compiler\Syntax\Parser.fs" />
-        <Compile Include="Gloon\Evaluation\Evaluator.fs" />
-        <Compile Include="Program.fs" />
+        <Compile Include="Gloon\Utils.fs" />
     </ItemGroup>
 </Project>

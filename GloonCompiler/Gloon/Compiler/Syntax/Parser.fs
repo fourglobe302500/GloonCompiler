@@ -2,10 +2,10 @@
 
 module Parser =
 
-    open Gloon.Types
+    open Gloon.Compiler.Syntax.Types
     open Gloon.Compiler.Syntax.Facts
 
-    let Parser (tokens_: Token list, diagnostics_: string list) =
+    let Parse (tokens_: Token list, diagnostics_: string list) =
         let tokens = tokens_ |> Seq.filter (fun t ->
             match t.Kind with
             | TokenKind.WhiteSpaceToken _ -> false
@@ -29,20 +29,20 @@ module Parser =
             match (current ()).Kind with
             | k when k = kind -> Next()
             | _ ->
-                diagnostics.Add($"GLOON::COMPILER::PARSER Unnexpected Token <{(current()).Kind}> expexted <{kind}> at: {(current ()).Position}.")
-                Token ((Next ()).Position,"",kind, (Obj null))
+                diagnostics.Add($"GLOON::COMPILER::SYNTAX::PARSER Unnexpected Token <{(current()).Kind}> expexted <{kind}> at: {(current ()).Position}.")
+                Token ((Next ()).Position,"",kind, null)
 
         let rec ParsePrimaryExpression () =
             match (current ()).Kind with
-            | TokenKind.NumberLiteralToken n -> Expression.LiteralExpression (Match (TokenKind.NumberLiteralToken n))
-            | TokenKind.OpenParenToken -> Expression.ParenthesysExpression (Next (), ParseBinaryExpression 0, Match TokenKind.CloseParenToken)
+            | TokenKind.NumberLiteralToken n -> ExpressionSyntax.LiteralExpression (Match (TokenKind.NumberLiteralToken n))
+            | TokenKind.OpenParenToken -> ExpressionSyntax.ParenthesysExpression (Next (), ParseBinaryExpression 0, Match TokenKind.CloseParenToken)
             | _ ->
-                diagnostics.Add($"GLOON::COMPILER::PARSER Invallid Token <{(current ()).Kind}> at: {(current ()).Position}.")
-                Expression.ErrorExpression (Next())
+                diagnostics.Add($"GLOON::COMPILER::SYNTAX::PARSER Invallid Token <{(current ()).Kind}> at: {(current ()).Position}.")
+                ExpressionSyntax.ErrorExpression (Next())
 
         and ParseUnaryExpression () =
             if (current ()).Kind.UnaryOperatorPrecedence > 0
-            then Expression.UnaryExpression(Next (), ParseUnaryExpression ())
+            then ExpressionSyntax.UnaryExpression(Next (), ParseUnaryExpression ())
             else ParsePrimaryExpression ()
 
         and ParseBinaryExpression parentPrecedence =
@@ -52,7 +52,7 @@ module Parser =
                 let (precedence, right) = (current ()).Kind.BinaryOperatorPrecedence
                 if precedence = 0 || (if right then precedence < parentPrecedence else precedence <= parentPrecedence)
                 then Break <- true
-                else left <- Expression.BinaryExpression (left, Next (), ParseBinaryExpression precedence)
+                else left <- ExpressionSyntax.BinaryExpression (left, Next (), ParseBinaryExpression precedence)
             left
 
         CST (ParseBinaryExpression 0, Match(TokenKind.EndOfFileToken), diagnostics.ToArray() |> Array.toList)

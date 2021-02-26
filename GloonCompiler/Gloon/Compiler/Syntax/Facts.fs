@@ -1,7 +1,7 @@
 ﻿namespace Gloon.Compiler.Syntax
 
 module Facts =
-    open Gloon.Types
+    open Gloon.Compiler.Syntax.Types
 
     type TokenKind with
         member this.BinaryOperatorPrecedence = this |> function
