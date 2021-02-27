@@ -67,4 +67,4 @@ module Lexer =
             tokens.Add (token)
             if token.Kind = TokenKind.EndOfFileToken
             then Break <- true
-        (tokens.ToArray() |> Array.toList,diagnostics.ToArray() |> Array.toList)
+        struct(tokens.ToArray() |> Array.toList,diagnostics.ToArray() |> Array.toList)

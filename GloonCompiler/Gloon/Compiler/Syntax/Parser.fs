@@ -5,7 +5,7 @@ module Parser =
     open Gloon.Compiler.Syntax.Types
     open Gloon.Compiler.Syntax.Facts
 
-    let Parse (tokens_: Token list, diagnostics_: string list) =
+    let Parse struct(tokens_: Token list, diagnostics_: string list) =
         let tokens = tokens_ |> Seq.filter (fun t ->
             match t.Kind with
             | TokenKind.WhiteSpaceToken _ -> false

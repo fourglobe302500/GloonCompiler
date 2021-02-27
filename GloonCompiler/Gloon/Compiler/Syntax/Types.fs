@@ -9,10 +9,10 @@ module Types =
         | Token         of Token
         | CST           of CST
 
-        member this.getChildren () = this |> function
-            | SyntaxNode.Expression   e -> e.getChildren()
+        member this.Children = this |> function
+            | SyntaxNode.Expression   e -> e.Children
             | SyntaxNode.Token        _ -> []
-            | SyntaxNode.CST          t -> t.getChildren()
+            | SyntaxNode.CST          t -> t.Children
 
         override this.ToString () = this |> function
             | SyntaxNode.Expression   e -> e.ToString ()
@@ -20,14 +20,14 @@ module Types =
             | SyntaxNode.CST          _ -> "AbstractSyntaxTree"
 
     and CST (root: ExpressionSyntax, endOfFileToken: Token, diagnostics: string list) =
-        member val root = root
-        member val endOfFileToken = endOfFileToken
-        member val diagnostics = diagnostics
+        let root = root
+        let endOfFileToken = endOfFileToken
+        let diagnostics = diagnostics
 
         member _.Root = root
         member _.EndOfFileToken = endOfFileToken
         member _.Diagnostics = diagnostics
-        member a.getChildren () = [SyntaxNode.Expression root; SyntaxNode.Token endOfFileToken]
+        member _.Children = [SyntaxNode.Expression root; SyntaxNode.Token endOfFileToken]
 
     and Token (position_: int, text_: string, kind_: TokenKind, value: obj) =
         let position = position_
@@ -66,7 +66,7 @@ module Types =
         | UnaryExpression       of Operator: Token        * Operand: ExpressionSyntax
         | ErrorExpression       of Error: Token
 
-        member this.getChildren () = this |> function
+        member this.Children = this |> function
             | ExpressionSyntax.LiteralExpression                      n -> [SyntaxNode.Token n                                                                   ]
             | ExpressionSyntax.ParenthesysExpression        (op, e, cp) -> [SyntaxNode.Token op;        SyntaxNode.Expression e;      SyntaxNode.Token cp        ]
             | ExpressionSyntax.BinaryExpression (left, operator, right) -> [SyntaxNode.Expression left; SyntaxNode.Token operator;    SyntaxNode.Expression right]
