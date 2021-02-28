@@ -5,8 +5,6 @@ VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "GloonCompiler", "GloonCompiler\GloonCompiler.fsproj", "{DD327376-458C-4581-9D29-44CAB32FC60A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GloonREPL", "GloonREPL\GloonREPL.csproj", "{60C7E8C7-1E0F-4EE5-BB3E-A06729682F1B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
