@@ -29,17 +29,15 @@ module Types =
     member _.Diagnostics = diagnostics
     member _.Children = [Expression root; SyntaxNode.Token endOfFileToken]
 
-  and Token (position: int, text: string, kind: TokenKind, value: obj) =
-    let position = position
-    let text = text
-    let kind = kind
-    let value = value
+  and Token =
+    {
+      Position: int
+      Text: string
+      Kind: TokenKind
+      Value: obj
+    } 
 
-    override _.ToString () = kind.ToString()
-    member _.Position = position
-    member _.Text = text
-    member _.Kind = kind
-    member _.Value = value
+    override this.ToString () = this.Kind.ToString()
 
   and TokenKind =
     | NumberLiteralToken    of int
@@ -57,6 +55,9 @@ module Types =
     | RootToken
     | SlashToken
     | ModulosToken
+    | BangToken
+    | DoubleAmpersandToken
+    | DoublePipeToken
     | OpenParenToken
     | CloseParenToken
 

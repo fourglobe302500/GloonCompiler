@@ -18,6 +18,11 @@ module Evaluator =
         | Modulos -> upcast (l % r)
         | Power -> upcast Math.Round ((float l) ** (float r))
         | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Binary Operation")
+      | (:? bool as l), (:? bool as r) ->
+        match o with
+        | LogicalAnd -> upcast (l && r)
+        | LogicalOr -> upcast (l || r)
+        | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Binary Operation")
       | _ -> null
     | UnaryExpression (o, e) -> 
       match Evaluate e with
@@ -25,6 +30,10 @@ module Evaluator =
         match o with
         | Identity -> upcast op
         | Negation -> upcast -op
+        | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Unary Operation")
+      | :? bool as op ->
+        match o with
+        | Negation -> upcast not op
         | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Unary Operation")
       | _ -> null
     | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invaliid Expression")

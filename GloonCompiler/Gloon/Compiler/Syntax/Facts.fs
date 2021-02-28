@@ -1,19 +1,23 @@
 ﻿namespace Gloon.Compiler.Syntax
 
 module Facts =
-    open Gloon.Compiler.Syntax.Types
+  open Gloon.Compiler.Syntax.Types
 
-    type TokenKind with
-        member this.BinaryOperatorPrecedence = this |> function
-            | TokenKind.PowerToken -> (3, true)
-            | TokenKind.ModulosToken -> (3, true)
-            | TokenKind.StarToken -> (2, false)
-            | TokenKind.SlashToken -> (2, false)
-            | TokenKind.MinusToken -> (1, false)
-            | TokenKind.PlusToken -> (1, false)
-            | _ -> (0, false)
+  type TokenKind with
+    member this.BinaryOperatorPrecedence = this |> function
+      | PowerToken ->             (5, true )
+      | ModulosToken ->           (5, true )
+      | StarToken ->              (4, false)
+      | SlashToken ->             (4, false)
+      | MinusToken ->             (3, false)
+      | PlusToken ->              (3, false)
+      | DoubleAmpersandToken ->   (2, false)
+      | DoublePipeToken ->        (1, false)
+      | _ ->                      (0, false)
 
-        member this.UnaryOperatorPrecedence = this |> function
-            | TokenKind.PlusToken -> 1
-            | TokenKind.MinusToken -> 1
-            | _ -> 0
+    member this.UnaryOperatorPrecedence = this |> function
+      | PlusToken ->  1
+      | MinusToken -> 1
+      | BangToken ->  1
+      | _ ->          0
+
