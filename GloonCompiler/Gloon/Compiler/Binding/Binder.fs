@@ -2,64 +2,45 @@
 
 module Binder =
 
-    open Gloon.Compiler.Syntax.Types
-    open Gloon.Compiler.Binding.BoundTypes
+  open Gloon.Compiler.Syntax.Types
+  open Gloon.Compiler.Binding.BoundTypes
 
-    let Bind (cst: CST) =
-        let diagnostics = ResizeArray (cst.Diagnostics)
+  let internal bind (cst: CST) =
+    let diagnostics = ResizeArray (cst.Diagnostics)
 
-        let rec BindExpression = function
-        | ExpressionSyntax.LiteralExpression l -> BindLiteralExpression (l)
-        | ExpressionSyntax.IdentifierExpression i -> BindErrorExpression (i)
-        | ExpressionSyntax.UnaryExpression (op, e) -> BindUnaryExpression (op, e)
-        | ExpressionSyntax.BinaryExpression (l,o,r) -> BindBinaryExpression (l, o, r)
-        | ExpressionSyntax.ParenthesysExpression (_,e,_) -> BindExpression (e)
-        | ExpressionSyntax.ErrorExpression e -> BindErrorExpression (e)
+    let rec bindExpression = function
+    | ExpressionSyntax.LiteralExpression l -> bindLiteralExpression (l)
+    | ExpressionSyntax.IdentifierExpression i -> bindErrorExpression (i)
+    | ExpressionSyntax.UnaryExpression (op, e) -> bindUnaryExpression (op, e)
+    | ExpressionSyntax.BinaryExpression (l,o,r) -> bindBinaryExpression (l, o, r)
+    | ExpressionSyntax.ParenthesysExpression (_,e,_) -> bindExpression (e)
+    | ExpressionSyntax.ErrorExpression e -> bindErrorExpression (e)
 
-        and BindLiteralExpression syntax : BoundExpression =
-            syntax.Value |> BoundExpression.LiteralExpression
+    and bindLiteralExpression syntax : BoundExpression =
+      syntax.Value |> LiteralExpression
 
-        and BindUnaryExpression (op, e) : BoundExpression =
-            let boundOperand = BindExpression e
-            let boundOperator = BindUnaryOperatorKind (op, boundOperand.Type)
-            if boundOperator = UnaryOperatorKind.Invallid
-            then
-                diagnostics.Add($"Unary operator '{op.Text}' is not defined for type <{boundOperand.Type}>.")
-                boundOperand
-            else
-                BoundExpression.UnaryExpression (boundOperator, boundOperand)
+    and bindUnaryExpression (op, e) : BoundExpression =
+      let boundOperand = bindExpression e
+      let boundOperator = UnaryOperator.Bind (op.Kind, boundOperand.Type)
+      if boundOperator.IsNone then
+        diagnostics.Add($"Unary operator '{op.Text}' is not defined for type <{boundOperand.Type}>.")
+        boundOperand
+      else
+        UnaryExpression (boundOperator.Value, boundOperand)
 
-        and BindBinaryExpression (l, o, r) =
-            let boundLeft = BindExpression l
-            let boundRight = BindExpression r
-            let boundOperator = BindBinaryOperatorKind (o, boundLeft.Type, boundRight.Type)
-            if boundOperator = BinaryOperatorKind.Invallid
-            then
-                diagnostics.Add($"Binary operator '{o.Text}' is nor defined for types <{boundLeft.Type}> and <{boundRight.Type}>.")
-                boundLeft
-            else
-                BoundExpression.BinaryExpression (boundLeft, boundOperator, boundRight)
+    and bindBinaryExpression (l, o, r) : BoundExpression =
+      let boundLeft = bindExpression l
+      let boundRight = bindExpression r
+      let boundOperator = BinaryOperator.Bind(o.Kind, boundLeft.Type, boundRight.Type)
+      if boundOperator.IsNone then
+        diagnostics.Add($"Binary operator '{o.Text}' is nor defined for types <{boundLeft.Type}> and <{boundRight.Type}>.")
+        boundLeft
+      else
+        BinaryExpression (boundLeft, boundOperator.Value, boundRight)
 
-        and BindErrorExpression e =
-            BoundExpression.ErrorExpression e.Text
+    and bindErrorExpression e : BoundExpression =
+      ErrorExpression e.Text
 
-        and BindUnaryOperatorKind (o, t) =
-            if (t = typedefof<int>)
-            then o.Kind |> function
-                | TokenKind.PlusToken -> UnaryOperatorKind.Identity
-                | TokenKind.MinusToken -> UnaryOperatorKind.Negation
-                | _ -> raise (System.Exception $"GLOON::COMPILER::BINDING::BINDER Unexpected unary operator {o.Kind} at: {o.Position}.")
-            else UnaryOperatorKind.Invallid
+    bindExpression cst.Root, diagnostics.ToArray (), cst
 
-        and BindBinaryOperatorKind (o, lt, rt) =
-            if (lt = typedefof<int> && rt = typedefof<int>)
-            then o.Kind |> function
-                | TokenKind.PlusToken -> BinaryOperatorKind.Addition
-                | TokenKind.MinusToken -> BinaryOperatorKind.Subtraction
-                | TokenKind.StarToken -> BinaryOperatorKind.Multiplication
-                | TokenKind.SlashToken -> BinaryOperatorKind.Division
-                | TokenKind.ModulosToken -> BinaryOperatorKind.Modulos
-                | TokenKind.PowerToken -> BinaryOperatorKind.Power
-                | _ -> raise (System.Exception $"GLOON::COMPILER::BINDING::BINDER Unexpected binary operator {o.Kind} at: {o.Position}.")
-            else BinaryOperatorKind.Invallid
-        BindExpression cst.Root, diagnostics.ToArray (), cst
+

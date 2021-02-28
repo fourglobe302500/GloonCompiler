@@ -27,19 +27,17 @@ module Types =
     member _.Root = root
     member _.EndOfFileToken = endOfFileToken
     member _.Diagnostics = diagnostics
-    member _.Children = [Expression root; SyntaxNode.Token endOfFileToken]
+    member _.Children = [Expression root; Token endOfFileToken]
 
-  and Token (position: int, text: string, kind: TokenKind, value: obj) =
-    let position = position
-    let text = text
-    let kind = kind
-    let value = value
+  and Token =
+    {
+      Position: int
+      Text: string
+      Kind: TokenKind
+      Value: obj
+    } 
 
-    override _.ToString () = kind.ToString()
-    member _.Position = position
-    member _.Text = text
-    member _.Kind = kind
-    member _.Value = value
+    override this.ToString () = this.Kind.ToString()
 
   and TokenKind =
     | NumberLiteralToken    of int
@@ -56,7 +54,16 @@ module Types =
     | StarToken
     | RootToken
     | SlashToken
-    | ModulosToken
+    | PercentToken
+    | BangToken
+    | BangEqualsToken
+    | DoubleEqualsToken
+    | LessThanEqualsToken
+    | LessThanToken
+    | GreaterThanEqualsToken
+    | GreaterThanToken
+    | DoubleAmpersandToken
+    | DoublePipeToken
     | OpenParenToken
     | CloseParenToken
 
@@ -69,12 +76,12 @@ module Types =
     | ErrorExpression       of Error: Token
 
     member this.Children = this |> function
-      | LiteralExpression                      n -> [SyntaxNode.Token n]
-      | IdentifierExpression                   i -> [SyntaxNode.Token i]
-      | ParenthesysExpression        (op, e, cp) -> [SyntaxNode.Token op; Expression e; SyntaxNode.Token cp]
-      | BinaryExpression (left, operator, right) -> [Expression left; SyntaxNode.Token operator; Expression right]
-      | UnaryExpression      (operator, operand) -> [SyntaxNode.Token operator; Expression operand]
-      | ErrorExpression                        e -> [SyntaxNode.Token e]
+      | LiteralExpression                      n -> [Token n]
+      | IdentifierExpression                   i -> [Token i]
+      | ParenthesysExpression        (op, e, cp) -> [Token op; Expression e; Token cp]
+      | BinaryExpression (left, operator, right) -> [Expression left; Token operator; Expression right]
+      | UnaryExpression      (operator, operand) -> [Token operator; Expression operand]
+      | ErrorExpression                        e -> [Token e]
 
     override this.ToString () = this |> function
       | LiteralExpression      _ -> "NumberExpression"
