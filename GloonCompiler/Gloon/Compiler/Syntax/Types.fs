@@ -54,7 +54,7 @@ module Types =
     | StarToken
     | RootToken
     | SlashToken
-    | ModulosToken
+    | PercentToken
     | BangToken
     | DoubleAmpersandToken
     | DoublePipeToken

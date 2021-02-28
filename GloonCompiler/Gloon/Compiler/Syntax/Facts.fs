@@ -6,7 +6,7 @@ module Facts =
   type TokenKind with
     member this.BinaryOperatorPrecedence = this |> function
       | PowerToken ->             (5, true )
-      | ModulosToken ->           (5, true )
+      | PercentToken ->           (5, true )
       | StarToken ->              (4, false)
       | SlashToken ->             (4, false)
       | MinusToken ->             (3, false)

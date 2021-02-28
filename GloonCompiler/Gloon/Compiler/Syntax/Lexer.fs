@@ -62,7 +62,7 @@ module Lexer =
       | '/' -> {Position = move 1; Text = text start; Kind = SlashToken; Value = null}
       | '(' -> {Position = move 1; Text = text start; Kind = OpenParenToken; Value = null}
       | ')' -> {Position = move 1; Text = text start; Kind = CloseParenToken; Value = null}
-      | '%' -> {Position = move 1; Text = text start; Kind = ModulosToken; Value = null}
+      | '%' -> {Position = move 1; Text = text start; Kind = PercentToken; Value = null}
       | '!' -> {Position = move 1; Text = text start; Kind = BangToken; Value = null}
       | '&' when lookAhead () = '&' -> {Position = move 2; Text = text start; Kind = DoubleAmpersandToken; Value = null}
       | '|' when lookAhead () = '|' -> {Position = move 2; Text = text start; Kind = DoublePipeToken; Value = null}
