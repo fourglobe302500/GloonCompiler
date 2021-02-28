@@ -10,6 +10,7 @@ module Binder =
 
         let rec BindExpression = function
         | ExpressionSyntax.LiteralExpression l -> BindLiteralExpression (l)
+        | ExpressionSyntax.IdentifierExpression i -> BindErrorExpression (i)
         | ExpressionSyntax.UnaryExpression (op, e) -> BindUnaryExpression (op, e)
         | ExpressionSyntax.BinaryExpression (l,o,r) -> BindBinaryExpression (l, o, r)
         | ExpressionSyntax.ParenthesysExpression (_,e,_) -> BindExpression (e)
@@ -61,4 +62,4 @@ module Binder =
                 | TokenKind.PowerToken -> BinaryOperatorKind.Power
                 | _ -> raise (System.Exception $"GLOON::COMPILER::BINDING::BINDER Unexpected binary operator {o.Kind} at: {o.Position}.")
             else BinaryOperatorKind.Invallid
-        BoundNode.Expression (BindExpression cst.Root), diagnostics.ToArray (), cst
+        BindExpression cst.Root, diagnostics.ToArray (), cst

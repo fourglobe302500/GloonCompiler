@@ -10,13 +10,13 @@ module BoundTypes =
         | BinaryOperator of BinaryOperatorKind
 
         member n.Children = n |> function
-            | BoundNode.Expression e -> e.Children
+            | Expression e -> e.Children
             | _ -> []
 
         override n.ToString () = n |> function
-            | BoundNode.Expression _ -> "Bound Expression"
-            | BoundNode.UnaryOperator u -> $"Unary Operator {u}"
-            | BoundNode.BinaryOperator b -> $"Binary Operator {b}"
+            | Expression _ -> "Bound Expression"
+            | UnaryOperator u -> $"Unary Operator {u}"
+            | BinaryOperator b -> $"Binary Operator {b}"
 
     and UnaryOperatorKind =
         | Identity
@@ -43,18 +43,18 @@ module BoundTypes =
         | ErrorExpression of error: string
 
         member e.Type = e |> function
-            | BoundExpression.LiteralExpression v -> v.GetType()
-            | BoundExpression.UnaryExpression (_,op) -> op.Type
-            | BoundExpression.BinaryExpression (l,_,_) -> l.Type
-            | BoundExpression.ErrorExpression _ -> ("").GetType()
+            | LiteralExpression v -> v.GetType()
+            | UnaryExpression (_,op) -> op.Type
+            | BinaryExpression (l,_,_) -> l.Type
+            | ErrorExpression _ -> ("").GetType()
 
         member e.Children = e |> function
-            | BoundExpression.UnaryExpression (op, e) -> [BoundNode.UnaryOperator op; BoundNode.Expression e]
-            | BoundExpression.BinaryExpression (l, o, r) -> [BoundNode.Expression l; BoundNode.BinaryOperator o; BoundNode.Expression r]
+            | UnaryExpression (op, e) -> [UnaryOperator op; Expression e]
+            | BinaryExpression (l, o, r) -> [Expression l; BinaryOperator o; Expression r]
             | _ -> []
 
         override e.ToString () = e |> function
-            | BoundExpression.UnaryExpression _ -> "Unary Expression"
-            | BoundExpression.BinaryExpression _ -> "Binary Expression"
-            | BoundExpression.LiteralExpression l -> $"Literal Expression {l}"
-            | BoundExpression.ErrorExpression e -> $"Error Expression {e}"
+            | UnaryExpression _ -> "Unary Expression"
+            | BinaryExpression _ -> "Binary Expression"
+            | LiteralExpression l -> $"Literal Expression {l}"
+            | ErrorExpression e -> $"Error Expression {e}"

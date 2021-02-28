@@ -36,6 +36,8 @@ module Parser =
             match (current ()).Kind with
             | TokenKind.NumberLiteralToken n -> ExpressionSyntax.LiteralExpression (Match (TokenKind.NumberLiteralToken n))
             | TokenKind.OpenParenToken -> ExpressionSyntax.ParenthesysExpression (Next (), ParseBinaryExpression 0, Match TokenKind.CloseParenToken)
+            | TokenKind.BooleanLiteralToken b -> ExpressionSyntax.LiteralExpression (Match (TokenKind.BooleanLiteralToken b))
+            | TokenKind.Identifier i -> ExpressionSyntax.IdentifierExpression (Match (TokenKind.Identifier i))
             | _ ->
                 diagnostics.Add($"GLOON::COMPILER::SYNTAX::PARSER Invallid Token <{(current ()).Kind}> at: {(current ()).Position}.")
                 ExpressionSyntax.ErrorExpression (Next())

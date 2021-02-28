@@ -2,80 +2,84 @@
 
 module Types =
 
-    let private third (_,_,c) = c
+  let private third (_,_,c) = c
 
-    type SyntaxNode =
-        | Expression    of ExpressionSyntax
-        | Token         of Token
-        | CST           of CST
+  type SyntaxNode =
+    | Expression    of ExpressionSyntax
+    | Token         of Token
+    | CST           of CST
 
-        member this.Children = this |> function
-            | SyntaxNode.Expression   e -> e.Children
-            | SyntaxNode.Token        _ -> []
-            | SyntaxNode.CST          t -> t.Children
+    member this.Children = this |> function
+      | Expression   e -> e.Children
+      | Token        _ -> []
+      | CST          t -> t.Children
 
-        override this.ToString () = this |> function
-            | SyntaxNode.Expression   e -> e.ToString ()
-            | SyntaxNode.Token        t -> t.ToString ()
-            | SyntaxNode.CST          _ -> "AbstractSyntaxTree"
+    override this.ToString () = this |> function
+      | Expression   e -> e.ToString ()
+      | Token        t -> t.ToString ()
+      | CST          _ -> "Concrete Syntax Tree"
 
-    and CST (root: ExpressionSyntax, endOfFileToken: Token, diagnostics: string list) =
-        let root = root
-        let endOfFileToken = endOfFileToken
-        let diagnostics = diagnostics
+  and CST (root: ExpressionSyntax, endOfFileToken: Token, diagnostics: string list) =
+    let root = root
+    let endOfFileToken = endOfFileToken
+    let diagnostics = diagnostics
 
-        member _.Root = root
-        member _.EndOfFileToken = endOfFileToken
-        member _.Diagnostics = diagnostics
-        member _.Children = [SyntaxNode.Expression root; SyntaxNode.Token endOfFileToken]
+    member _.Root = root
+    member _.EndOfFileToken = endOfFileToken
+    member _.Diagnostics = diagnostics
+    member _.Children = [Expression root; SyntaxNode.Token endOfFileToken]
 
-    and Token (position_: int, text_: string, kind_: TokenKind, value: obj) =
-        let position = position_
-        let text = text_
-        let kind = kind_
-        let mutable value = value
+  and Token (position: int, text: string, kind: TokenKind, value: obj) =
+    let position = position
+    let text = text
+    let kind = kind
+    let value = value
 
-        override _.ToString () = kind.ToString()
-        member _.Position = position
-        member _.Text = text
-        member _.Kind = kind
-        member _.Value = value
+    override _.ToString () = kind.ToString()
+    member _.Position = position
+    member _.Text = text
+    member _.Kind = kind
+    member _.Value = value
 
-    and TokenKind =
-        | NumberLiteralToken    of int
-        | Identifier            of string
-        | WhiteSpaceToken       of string
-        | EndOfFileToken
-        | InvallidToken
-        | IncrementToken
-        | PlusToken
-        | DecrementToken
-        | MinusToken
-        | PowerToken
-        | StarToken
-        | RootToken
-        | SlashToken
-        | ModulosToken
-        | OpenParenToken
-        | CloseParenToken
+  and TokenKind =
+    | NumberLiteralToken    of int
+    | BooleanLiteralToken   of bool
+    | Identifier            of string
+    | WhiteSpaceToken       of string
+    | EndOfFileToken
+    | InvallidToken
+    | IncrementToken
+    | PlusToken
+    | DecrementToken
+    | MinusToken
+    | PowerToken
+    | StarToken
+    | RootToken
+    | SlashToken
+    | ModulosToken
+    | OpenParenToken
+    | CloseParenToken
 
-    and ExpressionSyntax =
-        | ParenthesysExpression of OpenParen: Token       * Expr: ExpressionSyntax    * CloseParen: Token
-        | LiteralExpression     of LiteralToken: Token
-        | BinaryExpression      of Left: ExpressionSyntax * Operator: Token           * Right: ExpressionSyntax
-        | UnaryExpression       of Operator: Token        * Operand: ExpressionSyntax
-        | ErrorExpression       of Error: Token
+  and ExpressionSyntax =
+    | ParenthesysExpression of OpenParen: Token       * Expr: ExpressionSyntax    * CloseParen: Token
+    | LiteralExpression     of LiteralToken: Token
+    | IdentifierExpression  of IdentifierToken: Token
+    | BinaryExpression      of Left: ExpressionSyntax * Operator: Token           * Right: ExpressionSyntax
+    | UnaryExpression       of Operator: Token        * Operand: ExpressionSyntax
+    | ErrorExpression       of Error: Token
 
-        member this.Children = this |> function
-            | ExpressionSyntax.LiteralExpression                      n -> [SyntaxNode.Token n                                                                   ]
-            | ExpressionSyntax.ParenthesysExpression        (op, e, cp) -> [SyntaxNode.Token op;        SyntaxNode.Expression e;      SyntaxNode.Token cp        ]
-            | ExpressionSyntax.BinaryExpression (left, operator, right) -> [SyntaxNode.Expression left; SyntaxNode.Token operator;    SyntaxNode.Expression right]
-            | ExpressionSyntax.UnaryExpression      (operator, operand) -> [SyntaxNode.Token operator;  SyntaxNode.Expression operand                            ]
-            | ExpressionSyntax.ErrorExpression                        e -> [SyntaxNode.Token e                                                                   ]
+    member this.Children = this |> function
+      | LiteralExpression                      n -> [SyntaxNode.Token n]
+      | IdentifierExpression                   i -> [SyntaxNode.Token i]
+      | ParenthesysExpression        (op, e, cp) -> [SyntaxNode.Token op; Expression e; SyntaxNode.Token cp]
+      | BinaryExpression (left, operator, right) -> [Expression left; SyntaxNode.Token operator; Expression right]
+      | UnaryExpression      (operator, operand) -> [SyntaxNode.Token operator; Expression operand]
+      | ErrorExpression                        e -> [SyntaxNode.Token e]
 
-        override this.ToString () = this |> function
-            | ExpressionSyntax.LiteralExpression      _ -> "NumberExpression"
-            | ExpressionSyntax.ParenthesysExpression  _ -> "ParenthesisedExpression"
-            | ExpressionSyntax.BinaryExpression       _ -> "BinaryExpression"
-            | ExpressionSyntax.UnaryExpression        _ -> "UnaryExpression"
-            | ExpressionSyntax.ErrorExpression        _ -> "ErrorExpression"
+    override this.ToString () = this |> function
+      | LiteralExpression      _ -> "NumberExpression"
+      | IdentifierExpression   _ -> "IdentifierExpression"
+      | ParenthesysExpression  _ -> "ParenthesisedExpression"
+      | BinaryExpression       _ -> "BinaryExpression"
+      | UnaryExpression        _ -> "UnaryExpression"
+      | ErrorExpression        _ -> "ErrorExpression"

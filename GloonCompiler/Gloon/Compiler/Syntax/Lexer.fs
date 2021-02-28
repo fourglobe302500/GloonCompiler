@@ -22,10 +22,21 @@ module Lexer =
         let inline lookAhead () = peek 1
 
         let inline text start = s.[start..position - 1]
+        let inline get amount = if position + amount >= s.Length then s.[position..s.Length-1] else s.[position..position+amount]
         let inline newToken (start, tokenKind, value) = Token (start, text start, tokenKind, value)
 
         let inline move x = position <- position + x; position - x
         let inline next () = move 1 |> ignore
+
+        let GetKeywordKind = function
+        | "true" -> TokenKind.BooleanLiteralToken true
+        | "false" -> TokenKind.BooleanLiteralToken false
+        | a -> TokenKind.Identifier a
+
+        let GetKeywordValue str : obj = str |> function
+            | "true" ->  true :> obj
+            | "false" -> false :> obj
+            | a -> a :> obj
 
         let NextToken () : Token =
             let start = position
@@ -55,7 +66,7 @@ module Lexer =
             | '%' -> (move 1, TokenKind.ModulosToken, null) |> newToken
             | l when Char.IsLetter l ->
                 consume Char.IsLetter current next (fun () ->
-                    (start, TokenKind.Identifier (text start), null) |> newToken)
+                    (start, GetKeywordKind (text start), GetKeywordValue (text start)) |> newToken)
             | _ ->
                 next()
                 diagnostics.Add($"GLOON::COMPILER::SYNTAX::LEXER Invalid Token '{text start}' at: {position - 1}.")
