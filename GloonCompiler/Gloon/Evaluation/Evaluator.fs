@@ -1,24 +1,30 @@
-﻿namespace Gloon.Evaluation
+namespace Gloon.Evaluation
 
 module Evaluator =
-
-    open Gloon.Types
-
-    let rec Evaluate (root: Expression) =
-        root |> function
-        | Expression.NumberExpression n ->
-            n.Value |> function
-            | io.Int v -> v
-            | _ -> 0
-        | Expression.ParenthesysExpression (_,e,_) -> Evaluate e
-        | Expression.BinaryExpression (l, o, r) ->
-            o.Kind |> function
-            | TokenKind.PlusToken -> (Evaluate l) + (Evaluate r)
-            | TokenKind.MinusToken -> (Evaluate l) - (Evaluate r)
-            | TokenKind.StarToken -> (Evaluate l) * (Evaluate r)
-            | TokenKind.SlashToken -> (Evaluate l) / (Evaluate r)
-            | TokenKind.ModulosToken -> (Evaluate l) % (Evaluate r)
-            | TokenKind.PowerToken -> pown (Evaluate l) (Evaluate r)
-            | _ -> 0
-        | Expression.UnaryExpression (op, e) -> Evaluate e
-        | _ -> 0
+  open System
+  open Gloon.Compiler.Binding.BoundTypes
+  
+  let rec Evaluate (node: BoundExpression) = 
+    match node with
+    | LiteralExpression l -> l
+    | BinaryExpression (left,o,right) -> 
+      match (Evaluate left, Evaluate right) with
+      | (:? int as l), (:? int as r) -> 
+        match o with
+        | Addition -> upcast (l + r)
+        | Subtraction -> upcast (l - r)
+        | Multiplication -> upcast (l * r)
+        | Division -> upcast Math.Round (float (l / r))
+        | Modulos -> upcast (l % r)
+        | Power -> upcast Math.Round ((float l) ** (float r))
+        | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Binary Operation")
+      | _ -> null
+    | UnaryExpression (o, e) -> 
+      match Evaluate e with
+      | :? int as op ->
+        match o with
+        | Identity -> upcast op
+        | Negation -> upcast -op
+        | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Unary Operation")
+      | _ -> null
+    | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invaliid Expression")
