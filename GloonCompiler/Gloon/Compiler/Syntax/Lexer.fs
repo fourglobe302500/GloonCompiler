@@ -63,9 +63,15 @@ module Lexer =
       | '(' -> {Position = move 1; Text = text start; Kind = OpenParenToken; Value = null}
       | ')' -> {Position = move 1; Text = text start; Kind = CloseParenToken; Value = null}
       | '%' -> {Position = move 1; Text = text start; Kind = PercentToken; Value = null}
-      | '!' -> {Position = move 1; Text = text start; Kind = BangToken; Value = null}
       | '&' when lookAhead () = '&' -> {Position = move 2; Text = text start; Kind = DoubleAmpersandToken; Value = null}
       | '|' when lookAhead () = '|' -> {Position = move 2; Text = text start; Kind = DoublePipeToken; Value = null}
+      | '=' when lookAhead () = '=' -> {Position = move 2; Text = text start; Kind = DoubleEqualsToken; Value = null}
+      | '!' when lookAhead () = '=' -> {Position = move 2; Text = text start; Kind = BangEqualsToken; Value = null}
+      | '!' -> {Position = move 1; Text = text start; Kind = BangToken; Value = null}
+      | '<' when lookAhead () = '=' -> {Position = move 2; Text = text start; Kind = LessThanEqualsToken; Value = null}
+      | '<' -> {Position = move 1; Text = text start; Kind = LessThanToken; Value = null}
+      | '>' when lookAhead () = '=' -> {Position = move 2; Text = text start; Kind = GreaterThanEqualsToken; Value = null}
+      | '>' -> {Position = move 1; Text = text start; Kind = GreaterThanToken; Value = null}
       | l when Char.IsLetter l ->
         consume Char.IsLetter current next (fun () ->
           {Position = start; Text = text start; Kind = getKeywordKind (text start); Value = getKeywordValue (text start)})

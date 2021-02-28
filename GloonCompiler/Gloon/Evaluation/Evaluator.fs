@@ -17,11 +17,19 @@ module Evaluator =
         | Division -> upcast Math.Round (float (l / r))
         | Modulos -> upcast (l % r)
         | Power -> upcast Math.Round ((float l) ** (float r))
+        | GreaterThan -> upcast (l > r)
+        | GreaterThanOrEquals -> upcast (l >= r)
+        | LesserThan -> upcast (l < r)
+        | LesserThanOrEquals -> upcast (l <= r)
+        | Equals -> upcast (l = r)
+        | NotEquals -> upcast (l <> r)
         | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Binary Operation")
       | (:? bool as l), (:? bool as r) ->
         match o.Kind with
         | LogicalAnd -> upcast (l && r)
         | LogicalOr -> upcast (l || r)
+        | Equals -> upcast (l = r)
+        | NotEquals -> upcast (l <> r)
         | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Binary Operation")
       | _ -> null
     | UnaryExpression (o, e) -> 

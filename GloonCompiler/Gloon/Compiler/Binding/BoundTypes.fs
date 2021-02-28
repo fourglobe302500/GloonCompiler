@@ -29,7 +29,7 @@ module BoundTypes =
     member _.Token = token
     member _.Kind = kind
     member _.OperandType = operandType
-    member _.ReturnType = returnType
+    member _.Type = returnType
 
     static member private _operators = [
       UnaryOperator (PlusToken, Identity, typeof<int>)
@@ -62,7 +62,7 @@ module BoundTypes =
     member _.Kind = kind
     member _.LeftType = leftType
     member _.RightType = rightType
-    member _.ReturnType = returnType
+    member _.Type = returnType
 
     static member private _operators: BinaryOperator list = [
       BinaryOperator (PlusToken, Addition, typeof<int>)
@@ -72,6 +72,15 @@ module BoundTypes =
       BinaryOperator (PercentToken, Modulos, typeof<int>)
       BinaryOperator (PowerToken, Power, typeof<int>)
 
+      BinaryOperator (BangEqualsToken, NotEquals, typeof<int>, typeof<bool>)
+      BinaryOperator (DoubleEqualsToken, Equals, typeof<int>, typeof<bool>)
+      BinaryOperator (LessThanEqualsToken, LesserThanOrEquals, typeof<int>, typeof<bool>)
+      BinaryOperator (LessThanToken, LesserThan, typeof<int>, typeof<bool>)
+      BinaryOperator (GreaterThanEqualsToken, GreaterThanOrEquals, typeof<int>, typeof<bool>)
+      BinaryOperator (GreaterThanToken, GreaterThan, typeof<int>, typeof<bool>)
+
+      BinaryOperator (BangEqualsToken, NotEquals, typeof<bool>)
+      BinaryOperator (DoubleEqualsToken, Equals, typeof<bool>)
       BinaryOperator (DoubleAmpersandToken, LogicalAnd, typeof<bool>)
       BinaryOperator (DoublePipeToken, LogicalOr, typeof<bool>)
     ]
@@ -87,6 +96,12 @@ module BoundTypes =
     | Division
     | Modulos
     | Power
+    | NotEquals
+    | Equals
+    | GreaterThan
+    | GreaterThanOrEquals
+    | LesserThan
+    | LesserThanOrEquals
     | LogicalAnd
     | LogicalOr
 
@@ -100,8 +115,8 @@ module BoundTypes =
 
     member e.Type = e |> function
       | LiteralExpression v -> v.GetType()
-      | UnaryExpression (_,op) -> op.Type
-      | BinaryExpression (l,_,_) -> l.Type
+      | UnaryExpression (op,_) -> op.Type
+      | BinaryExpression (_,op,_) -> op.Type
       | ErrorExpression _ -> ("").GetType()
 
     member e.Children = e |> function
