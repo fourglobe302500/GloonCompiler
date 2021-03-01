@@ -1,8 +1,8 @@
 namespace Gloon.Evaluation
 
-module Evaluator =
+module internal Evaluator =
   open System
-  open Gloon.Compiler.Binding.BoundTypes
+  open Gloon.Binding.BoundTypes
   
   let rec internal evaluate (node: BoundExpression) = 
     match node with

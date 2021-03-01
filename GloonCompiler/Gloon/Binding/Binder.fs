@@ -1,12 +1,13 @@
-﻿namespace Gloon.Compiler.Binding
+﻿namespace Gloon.Binding
 
-module Binder =
+module internal Binder =
 
-  open Gloon.Compiler.Syntax.Types
-  open Gloon.Compiler.Binding.BoundTypes
+  open Gloon.Text
+  open Gloon.Syntax
+  open Gloon.Binding.BoundTypes
 
   let internal bind (cst: CST) =
-    let diagnostics = ResizeArray (cst.Diagnostics)
+    let diagnostics = DiagnosticsBag ("GLOON::BINDING::BINDER", cst.Diagnostics)
 
     let rec bindExpression = function
     | ExpressionSyntax.LiteralExpression l -> bindLiteralExpression (l)
@@ -23,7 +24,7 @@ module Binder =
       let boundOperand = bindExpression e
       let boundOperator = UnaryOperator.Bind (op.Kind, boundOperand.Type)
       if boundOperator.IsNone then
-        diagnostics.Add($"Unary operator '{op.Text}' is not defined for type <{boundOperand.Type}>.")
+        diagnostics.ReportUnaryNotDefined op boundOperand.Type
         boundOperand
       else
         UnaryExpression (boundOperator.Value, boundOperand)
@@ -33,7 +34,7 @@ module Binder =
       let boundRight = bindExpression r
       let boundOperator = BinaryOperator.Bind(o.Kind, boundLeft.Type, boundRight.Type)
       if boundOperator.IsNone then
-        diagnostics.Add($"Binary operator '{o.Text}' is nor defined for types <{boundLeft.Type}> and <{boundRight.Type}>.")
+        diagnostics.ReportBinaryNotDefined o boundLeft.Type boundRight.Type
         boundLeft
       else
         BinaryExpression (boundLeft, boundOperator.Value, boundRight)
@@ -41,6 +42,4 @@ module Binder =
     and bindErrorExpression e : BoundExpression =
       ErrorExpression e.Text
 
-    bindExpression cst.Root, diagnostics.ToArray (), cst
-
-
+    bindExpression cst.Root, diagnostics.Diagnostics, cst

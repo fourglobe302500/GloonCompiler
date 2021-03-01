@@ -1,8 +1,8 @@
-﻿namespace Gloon.Compiler.Binding
+﻿namespace Gloon.Binding
 
 module BoundTypes =
   open System
-  open Gloon.Compiler.Syntax.Types
+  open Gloon.Syntax
 
   type internal BoundNode =
     | Expression of BoundExpression
@@ -129,6 +129,3 @@ module BoundTypes =
       | BinaryExpression _ -> "Binary Expression"
       | LiteralExpression l -> $"Literal Expression {l}"
       | ErrorExpression e -> $"Error Expression {e}"
-
-
-

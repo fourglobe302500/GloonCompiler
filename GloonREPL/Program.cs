@@ -1,10 +1,9 @@
-﻿using Gloon;
-using Gloon.Compiler.Binding;
-using Gloon.Compiler.Syntax;
-using Gloon.Evaluation;
-
-using System;
+﻿using System;
 using System.Linq;
+
+using Gloon;
+using Gloon.Compiler;
+using Gloon.Syntax;
 
 namespace GloonREPL
 {
@@ -23,6 +22,7 @@ namespace GloonREPL
         if (string.IsNullOrEmpty(line))
           return;
         if (line.StartsWith('#'))
+        {
           switch (line)
           {
             case "#cls":
@@ -41,22 +41,34 @@ namespace GloonREPL
             default:
               Console.WriteLine("Invallid command");
               break;
+          }
         }
         else
         {
-          var (BoundSyntaxTree, Diagnostics, ConcreteSyntaxTree) = Binder.Bind(Parser.Parse(Lexer.Lex(line)));
-          Console.ForegroundColor = ConsoleColor.Gray;
-          if (CST) Utils.PrintCST(Types.SyntaxNode.NewCST(ConcreteSyntaxTree));
-          if (BST) Utils.PrintBST(BoundTypes.BoundNode.NewExpression(BoundSyntaxTree));
-          if (Diagnostics.Any())
+          var syntaxTree = Parser.Parse(line);
+          var compilation = new Compilation(syntaxTree);
+          if (CST) Utils.printCST(syntaxTree.ToExpression());
+          var result = compilation.Evaluate();
+          if (result.Diagnostics.Any())
           {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Diagnostics.ToList().ForEach(diag => Console.WriteLine(diag));
+            Console.WriteLine();
+            result.Diagnostics.ToList().ForEach(diag =>
+            {
+              Console.ForegroundColor = ConsoleColor.Red;
+              Console.WriteLine(diag);
+              Console.ForegroundColor = ConsoleColor.DarkGray;
+              Console.Write(" -> " + line[..diag.Span.Start]);
+              Console.ForegroundColor = ConsoleColor.Red;
+              Console.Write(line[diag.Span.Start..diag.Span.End]);
+              Console.ForegroundColor = ConsoleColor.DarkGray;
+              Console.WriteLine(line[diag.Span.End..]);
+              Console.WriteLine();
+            });
           }
           else
           {
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.WriteLine(Evaluator.Evaluate(BoundSyntaxTree));
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.WriteLine(result.Value);
           }
         }
       }
