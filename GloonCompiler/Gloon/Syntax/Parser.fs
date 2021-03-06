@@ -39,8 +39,10 @@ module Parser =
     let rec parsePrimaryExpression () =
       match currentKind() with
       | NumberLiteralToken n -> LiteralExpression (matchToken (NumberLiteralToken n))
-      | OpenParenToken -> ParenthesysExpression (next (), parseBinaryExpression 0, matchToken CloseParenToken)
+      | OpenParenToken -> ParenthesysExpression (next (), parseExpression (), matchToken CloseParenToken)
       | BooleanLiteralToken b -> LiteralExpression (matchToken (BooleanLiteralToken b))
+      | Identifier i when (lookAhead ()).Kind = TokenKind.EqualsToken ->
+        AssignmentExpression (matchToken (TokenKind.Identifier i), matchToken TokenKind.EqualsToken, parseExpression())
       | Identifier i -> IdentifierExpression (matchToken (Identifier i))
       | _ ->
         diagnostics.ReportInvallidKind "token" (current ())
@@ -61,4 +63,6 @@ module Parser =
         else left <- BinaryExpression (left, next (), parseBinaryExpression precedence)
       left
 
-    CST (parseBinaryExpression 0, matchToken(EndOfFileToken), diagnostics)
+    and parseExpression () = parseBinaryExpression 0
+
+    CST (parseExpression (), matchToken(EndOfFileToken), diagnostics)

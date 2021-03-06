@@ -64,6 +64,7 @@ and TokenKind =
   | BangToken
   | BangEqualsToken
   | DoubleEqualsToken
+  | EqualsToken
   | LessThanEqualsToken
   | LessThanToken
   | GreaterThanEqualsToken
@@ -74,25 +75,28 @@ and TokenKind =
   | CloseParenToken
 
 and ExpressionSyntax =
-  | ParenthesysExpression of OpenParen: Token       * Expr: ExpressionSyntax    * CloseParen: Token
+  | ParenthesysExpression of OpenParen: Token * Expr: ExpressionSyntax * CloseParen: Token
   | LiteralExpression     of LiteralToken: Token
   | IdentifierExpression  of IdentifierToken: Token
-  | BinaryExpression      of Left: ExpressionSyntax * Operator: Token           * Right: ExpressionSyntax
-  | UnaryExpression       of Operator: Token        * Operand: ExpressionSyntax
+  | AssignmentExpression   of IdentifierToken: Token * EqualToken: Token * Expr: ExpressionSyntax
+  | BinaryExpression      of Left: ExpressionSyntax * Operator: Token * Right: ExpressionSyntax
+  | UnaryExpression       of Operator: Token * Operand: ExpressionSyntax
   | ErrorExpression       of Error: Token
 
   member this.Children = this |> function
     | LiteralExpression                      n -> [Token n]
     | IdentifierExpression                   i -> [Token i]
+    | AssignmentExpression         (i, e, expr) -> [Token i; Token e; Expression expr]
     | ParenthesysExpression        (op, e, cp) -> [Token op; Expression e; Token cp]
     | BinaryExpression (left, operator, right) -> [Expression left; Token operator; Expression right]
     | UnaryExpression      (operator, operand) -> [Token operator; Expression operand]
     | ErrorExpression                        e -> [Token e]
 
   override this.ToString () = this |> function
-    | LiteralExpression      _ -> "NumberExpression"
-    | IdentifierExpression   _ -> "IdentifierExpression"
-    | ParenthesysExpression  _ -> "ParenthesisedExpression"
-    | BinaryExpression       _ -> "BinaryExpression"
-    | UnaryExpression        _ -> "UnaryExpression"
-    | ErrorExpression        _ -> "ErrorExpression"
+    | LiteralExpression      _ -> "Literal Expression"
+    | IdentifierExpression   _ -> "Identifier Expression"
+    | AssignmentExpression    _ -> "Assigment Expression"
+    | ParenthesysExpression  _ -> "Parenthesised Expression"
+    | BinaryExpression       _ -> "Binary Expression"
+    | UnaryExpression        _ -> "Unary Expression"
+    | ErrorExpression        _ -> "Error Expression"

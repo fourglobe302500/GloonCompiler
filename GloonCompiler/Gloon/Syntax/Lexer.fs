@@ -67,6 +67,7 @@ module Lexer =
       | '&' when lookAhead () = '&' -> {Position = move 2; Text = text start; Kind = DoubleAmpersandToken; Value = null}
       | '|' when lookAhead () = '|' -> {Position = move 2; Text = text start; Kind = DoublePipeToken; Value = null}
       | '=' when lookAhead () = '=' -> {Position = move 2; Text = text start; Kind = DoubleEqualsToken; Value = null}
+      | '=' -> {Position = move 1; Text = text start; Kind = EqualsToken; Value = null}
       | '!' when lookAhead () = '=' -> {Position = move 2; Text = text start; Kind = BangEqualsToken; Value = null}
       | '!' -> {Position = move 1; Text = text start; Kind = BangToken; Value = null}
       | '<' when lookAhead () = '=' -> {Position = move 2; Text = text start; Kind = LessThanEqualsToken; Value = null}

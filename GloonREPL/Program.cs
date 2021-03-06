@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Collections.Generic;
 
 using Gloon;
 using Gloon.Compiler;
@@ -12,7 +13,7 @@ namespace GloonREPL
     internal static void Main(string[] args)
     {
       var CST = false;
-      var BST = false;
+      var variables = new Dictionary<string, object>();
       while (true)
       {
         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -30,13 +31,17 @@ namespace GloonREPL
               break;
             case "#quit":
               return;
-            case "#CST":
+            case "#cst":
               CST = !CST;
               Console.WriteLine($"{(CST ? "Showing" : "Hiding")} Concrete Syntax Tree");
               break;
-            case "#BST":
-              BST = !BST;
-              Console.WriteLine($"{(BST ? "Showing" : "Hiding")} Bound Syntax Tree");
+            case "#clm":
+              variables.Clear();
+              Console.WriteLine($"Memory clear");
+              break;
+            case "#viewmemory":
+              foreach (var key in variables.Keys)
+                Console.WriteLine($"  {key}: {variables[key]}");
               break;
             default:
               Console.WriteLine("Invallid command");
@@ -48,7 +53,7 @@ namespace GloonREPL
           var syntaxTree = Parser.Parse(line);
           var compilation = new Compilation(syntaxTree);
           if (CST) Utils.printCST(syntaxTree.ToExpression());
-          var result = compilation.Evaluate();
+          var result = compilation.Evaluate(variables);
           if (result.Diagnostics.Any())
           {
             Console.WriteLine();

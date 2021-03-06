@@ -1,5 +1,6 @@
 namespace Gloon.Compiler
 
+open System.Collections.Generic
 open Gloon.Text
 open Gloon.Syntax
 open Gloon.Binding.Binder
@@ -15,8 +16,8 @@ type EvaluationResult =
 type Compilation (tree: CST) =
   let tree = tree
   member _.Tree = tree
-  member c.Evaluate () =
-    let (expression,diagnostics,_) = bind c.Tree
+  member c.Evaluate (variables: Dictionary<string, obj>) =
+    let (expression,diagnostics,_) = bind c.Tree variables
     if diagnostics.Length > 0
     then {Diagnostics = diagnostics; Value = null}
-    else {Diagnostics = diagnostics; Value = expression |> evaluate}
+    else {Diagnostics = diagnostics; Value = Evaluate expression variables}

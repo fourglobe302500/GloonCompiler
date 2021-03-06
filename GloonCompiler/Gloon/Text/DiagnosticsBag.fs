@@ -41,6 +41,9 @@ type DiagnosticsBag (tag: string, bag: IEnumerable<Diagnostic>) =
     b.Report (token.GetSpan()) $"Unary operator '{token.GetText()}' is not defined for type <{type_}>"
 
   member b.ReportBinaryNotDefined (token: IReportable) leftType rightType =
-    b.Report (token.GetSpan()) $"Binary operator '{token.GetText()}' is nor defined for types <{leftType}> and <{rightType}>"
+    b.Report (token.GetSpan()) $"Binary operator '{token.GetText()}' is not defined for types <{leftType}> and <{rightType}>"
+
+  member b.ReportUndefinedVariable (token: IReportable) =
+    b.Report (token.GetSpan()) $"Identifier {token.GetText()} is not defined"
 
   member _.Diagnostics : Diagnostic list = diagnostics |> Seq.toList
