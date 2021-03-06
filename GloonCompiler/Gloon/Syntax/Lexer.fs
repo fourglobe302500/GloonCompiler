@@ -1,9 +1,10 @@
-﻿namespace Gloon.Compiler.Syntax
+﻿namespace Gloon.Syntax
 
 module Lexer =
 
   open System
-  open Gloon.Compiler.Syntax.Types
+  open Gloon.Syntax
+  open Gloon.Text
 
   let private consume f current next constructor =
     while f (current ()) do
@@ -12,7 +13,7 @@ module Lexer =
 
   let Lex (s: string) =
     let mutable position = 0
-    let diagnostics = ResizeArray ()
+    let diagnostics = DiagnosticsBag ("GLOON::SYNTAX::LEXER")
 
     let peek x =
       if position + x >= s.Length
@@ -46,7 +47,7 @@ module Lexer =
           let res = ref 0
           if not (Int32.TryParse (text start, res))
           then
-            diagnostics.Add ($"GLOON::COMPILER::LEXER Invalid Int32 '{text start}' at: {position}")
+            diagnostics.ReportInvallidNumber start (position - start) (text start)
             {Position = start; Text = text start; Kind = NumberLiteralToken 0; Value = null}
           else {Position = start; Text = text start; Kind = NumberLiteralToken res.Value; Value = res.Value})
       | w when Char.IsWhiteSpace w ->
@@ -66,6 +67,7 @@ module Lexer =
       | '&' when lookAhead () = '&' -> {Position = move 2; Text = text start; Kind = DoubleAmpersandToken; Value = null}
       | '|' when lookAhead () = '|' -> {Position = move 2; Text = text start; Kind = DoublePipeToken; Value = null}
       | '=' when lookAhead () = '=' -> {Position = move 2; Text = text start; Kind = DoubleEqualsToken; Value = null}
+      | '=' -> {Position = move 1; Text = text start; Kind = EqualsToken; Value = null}
       | '!' when lookAhead () = '=' -> {Position = move 2; Text = text start; Kind = BangEqualsToken; Value = null}
       | '!' -> {Position = move 1; Text = text start; Kind = BangToken; Value = null}
       | '<' when lookAhead () = '=' -> {Position = move 2; Text = text start; Kind = LessThanEqualsToken; Value = null}
@@ -76,9 +78,8 @@ module Lexer =
         consume Char.IsLetter current next (fun () ->
           {Position = start; Text = text start; Kind = getKeywordKind (text start); Value = getKeywordValue (text start)})
       | _ ->
-        next()
-        diagnostics.Add($"GLOON::COMPILER::SYNTAX::LEXER Invalid Token '{text start}' at: {position - 1}.")
-        {Position = start; Text = text start; Kind = InvallidToken; Value = null}
+        diagnostics.ReportInvallidCharacter start (current ())
+        {Position = move 1; Text = (text start); Kind = InvallidToken (text start); Value = null}
     let mutable Break = false
     let tokens = ResizeArray ()
     while not Break do
@@ -86,5 +87,4 @@ module Lexer =
       tokens.Add (token)
       if token.Kind = EndOfFileToken
       then Break <- true
-    struct(tokens.ToArray() |> Array.toList,diagnostics.ToArray() |> Array.toList)
-
+    tokens |> Seq.toArray , diagnostics

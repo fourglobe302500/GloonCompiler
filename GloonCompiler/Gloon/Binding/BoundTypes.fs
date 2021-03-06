@@ -1,8 +1,9 @@
-﻿namespace Gloon.Compiler.Binding
+﻿namespace Gloon.Binding
 
 module BoundTypes =
   open System
-  open Gloon.Compiler.Syntax.Types
+  open Gloon.Symbols
+  open Gloon.Syntax
 
   type internal BoundNode =
     | Expression of BoundExpression
@@ -109,12 +110,16 @@ module BoundTypes =
 
   and internal BoundExpression =
     | LiteralExpression of Value: Object
+    | VariableExpression of Identifier: VariableSymbol
+    | AssignmentExpression of Identifier: VariableSymbol * Expr: BoundExpression
     | UnaryExpression of operator: UnaryOperator * operand: BoundExpression
     | BinaryExpression of left: BoundExpression * operator: BinaryOperator * right: BoundExpression
     | ErrorExpression of error: string
 
     member e.Type = e |> function
-      | LiteralExpression v -> v.GetType()
+      | LiteralExpression l -> l.GetType()
+      | VariableExpression v -> v.Type
+      | AssignmentExpression (_, e) -> e.Type
       | UnaryExpression (op,_) -> op.Type
       | BinaryExpression (_,op,_) -> op.Type
       | ErrorExpression _ -> ("").GetType()
@@ -125,10 +130,9 @@ module BoundTypes =
       | _ -> []
 
     override e.ToString () = e |> function
+      | LiteralExpression l -> $"Literal Expression '{l}'"
+      | VariableExpression v -> $"Variable Expression '{v.Name}'"
+      | AssignmentExpression (i, _) -> $"Assigment Expression '{i}'"
       | UnaryExpression _ -> "Unary Expression"
       | BinaryExpression _ -> "Binary Expression"
-      | LiteralExpression l -> $"Literal Expression {l}"
-      | ErrorExpression e -> $"Error Expression {e}"
-
-
-
+      | ErrorExpression e -> $"Error Expression '{e}'"

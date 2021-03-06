@@ -1,7 +1,7 @@
-﻿namespace Gloon.Compiler.Syntax
+﻿namespace Gloon.Syntax
 
 module Facts =
-  open Gloon.Compiler.Syntax.Types
+  open Gloon.Syntax
 
   type TokenKind with
     member this.BinaryOperatorPrecedence = this |> function
@@ -26,4 +26,3 @@ module Facts =
       | MinusToken -> 1
       | BangToken ->  1
       | _ ->          0
-
