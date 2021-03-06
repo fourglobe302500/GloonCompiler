@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 
 using Gloon;
+using Gloon.Symbols;
 using Gloon.Compiler;
 using Gloon.Syntax;
 
@@ -13,7 +14,7 @@ namespace GloonREPL
     internal static void Main(string[] args)
     {
       var CST = false;
-      var variables = new Dictionary<string, object>();
+      var variables = new Dictionary<VariableSymbol, object>();
       while (true)
       {
         Console.ForegroundColor = ConsoleColor.Cyan;
@@ -41,7 +42,7 @@ namespace GloonREPL
               break;
             case "#viewmemory":
               foreach (var key in variables.Keys)
-                Console.WriteLine($"  {key}: {variables[key]}");
+                Console.WriteLine($"  {key.Name}: {variables[key]}");
               break;
             default:
               Console.WriteLine("Invallid command");

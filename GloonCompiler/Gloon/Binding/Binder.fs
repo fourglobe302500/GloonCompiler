@@ -4,11 +4,13 @@ module internal Binder =
 
   open System
   open System.Collections.Generic
+  open System.Linq
+  open Gloon.Symbols
   open Gloon.Text
   open Gloon.Syntax
   open Gloon.Binding.BoundTypes
 
-  let internal bind (cst: CST) (variables: Dictionary<string, obj>) =
+  let internal bind (cst: CST) (variables: Dictionary<VariableSymbol, obj>) =
     let diagnostics = DiagnosticsBag ("GLOON::BINDING::BINDER", cst.Diagnostics)
 
     let rec bindExpression = function
@@ -24,27 +26,23 @@ module internal Binder =
       syntax.Value |> LiteralExpression
 
     and bindNameExpression syntax : BoundExpression =
-      let mutable value = null
-      if not (variables.TryGetValue(syntax.Text, &value)) then
+      let variable = variables.FirstOrDefault(fun v -> v.Key.Name = syntax.Text).Key
+      if variable.Type = null then
         diagnostics.ReportUndefinedVariable syntax
         LiteralExpression 0
       else
-        let type_ = value.GetType()
-        VariableExpression(syntax.Text, type_)
+        VariableExpression variable
 
     and bindAssigmentExpression (i, e) : BoundExpression =
       let boundExpr = bindExpression e
 
-      let defaultValue =
-        if boundExpr.Type = typeof<int> then 0 :> obj
-        elif boundExpr.Type = typeof<bool> then false :> obj
-        else null
+      let existingVariable = variables.Keys.FirstOrDefault(fun v -> v.Name = i.Text)
+      if existingVariable.Type <> null then
+        variables.Remove(existingVariable) |> ignore
+      let variable = VariableSymbol(i.Text, boundExpr.Type)
+      variables.[variable] <- null
 
-      if defaultValue = null then raise (new Exception $"Unsupported variable type: {boundExpr.Type}.")
-
-      variables.[i.Text] <- defaultValue
-
-      AssignmentExpression (i.Text, boundExpr)
+      AssignmentExpression (variable, boundExpr)
 
     and bindUnaryExpression (op, e) : BoundExpression =
       let boundOperand = bindExpression e

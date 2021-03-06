@@ -2,6 +2,7 @@
 
 module BoundTypes =
   open System
+  open Gloon.Symbols
   open Gloon.Syntax
 
   type internal BoundNode =
@@ -109,15 +110,15 @@ module BoundTypes =
 
   and internal BoundExpression =
     | LiteralExpression of Value: Object
-    | VariableExpression of Identifier: string * Type: Type
-    | AssignmentExpression of Identifier: string * Expr: BoundExpression
+    | VariableExpression of Identifier: VariableSymbol
+    | AssignmentExpression of Identifier: VariableSymbol * Expr: BoundExpression
     | UnaryExpression of operator: UnaryOperator * operand: BoundExpression
     | BinaryExpression of left: BoundExpression * operator: BinaryOperator * right: BoundExpression
     | ErrorExpression of error: string
 
     member e.Type = e |> function
-      | LiteralExpression v -> v.GetType()
-      | VariableExpression (_, t) -> t
+      | LiteralExpression l -> l.GetType()
+      | VariableExpression v -> v.Type
       | AssignmentExpression (_, e) -> e.Type
       | UnaryExpression (op,_) -> op.Type
       | BinaryExpression (_,op,_) -> op.Type
@@ -130,7 +131,7 @@ module BoundTypes =
 
     override e.ToString () = e |> function
       | LiteralExpression l -> $"Literal Expression '{l}'"
-      | VariableExpression (n,_) -> $"Variable Expression '{n}'"
+      | VariableExpression v -> $"Variable Expression '{v.Name}'"
       | AssignmentExpression (i, _) -> $"Assigment Expression '{i}'"
       | UnaryExpression _ -> "Unary Expression"
       | BinaryExpression _ -> "Binary Expression"

@@ -3,9 +3,10 @@ namespace Gloon.Evaluation
 module internal Evaluator =
   open System
   open System.Collections.Generic
+  open Gloon.Symbols
   open Gloon.Binding.BoundTypes
 
-  let rec internal Evaluate (node: BoundExpression) (variables: Dictionary<string, obj>) =
+  let rec internal Evaluate (node: BoundExpression) (variables: Dictionary<VariableSymbol, obj>) =
     let rec evaluate =
       function
       | LiteralExpression l -> l
@@ -34,7 +35,7 @@ module internal Evaluator =
           | NotEquals -> upcast (l <> r)
           | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Binary Operation")
         | _ -> null
-      | VariableExpression (i, _) -> variables.GetValueOrDefault(i)
+      | VariableExpression i -> variables.GetValueOrDefault(i)
       | AssignmentExpression (i, e) ->
         let value = evaluate e
         variables.[i] <- value
