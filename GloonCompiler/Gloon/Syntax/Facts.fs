@@ -26,3 +26,33 @@ module Facts =
       | MinusToken -> 1
       | BangToken ->  1
       | _ ->          0
+
+    member t.Text = t |> function
+      | NumberLiteralToken n -> n.ToString()
+      | BooleanLiteralToken true -> "true"
+      | BooleanLiteralToken false -> "false"
+      | Identifier i -> i
+      | WhiteSpaceToken w -> w
+      | InvallidToken i -> i
+      | EndOfFileToken -> "\0"
+      | IncrementToken -> "++"
+      | PlusToken -> "+"
+      | DecrementToken -> "--"
+      | MinusToken -> "-"
+      | PowerToken -> "**"
+      | StarToken -> "*"
+      | RootToken -> "//"
+      | SlashToken -> "/"
+      | PercentToken -> "%"
+      | BangToken -> "!"
+      | BangEqualsToken -> "!="
+      | DoubleEqualsToken -> "=="
+      | EqualsToken -> "="
+      | LessThanEqualsToken -> "<="
+      | LessThanToken -> "<"
+      | GreaterThanEqualsToken -> ">="
+      | GreaterThanToken -> ">"
+      | DoubleAmpersandToken -> "&&"
+      | DoublePipeToken -> "||"
+      | OpenParenToken -> "("
+      | CloseParenToken -> ")"
