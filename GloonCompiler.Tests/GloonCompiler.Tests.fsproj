@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Gloon\Syntax\Lexer.Tests.fs" />
+    <Compile Include="Gloon\Syntax\LexerTests.fs" />
     <Compile Include="program.fs" />
   </ItemGroup>
 

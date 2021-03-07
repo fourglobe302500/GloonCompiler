@@ -9,10 +9,10 @@ module Lexer =
   let private GetTokens () = [
       (TokenKind.NumberLiteralToken 0, "0")
       (TokenKind.NumberLiteralToken 10, "10")
-      (TokenKind.BooleanLiteralToken true, "true")
-      (TokenKind.BooleanLiteralToken false, "false")
       (TokenKind.Identifier "var", "var")
       (TokenKind.Identifier "abc", "abc")
+      (TokenKind.BooleanLiteralToken true, "true")
+      (TokenKind.BooleanLiteralToken false, "false")
       (TokenKind.IncrementToken, "++")
       (TokenKind.PlusToken, "+")
       (TokenKind.DecrementToken, "--")
@@ -48,7 +48,7 @@ module Lexer =
 
   [<TheoryAttribute>]
   [<MemberData(nameof GetTokensData)>]
-  let ``Lexer Lexes Token`` (kind, text) =
+  let ``Lexes Token`` (kind, text) =
     let tokens = Lex(text)
     Assert.Collection(tokens,
       System.Action<Token>(fun token ->
@@ -101,7 +101,7 @@ module Lexer =
 
   [<Theory>]
   [<MemberData(nameof GetTokenPairsData)>]
-  let ``Lexer Lexes Token Pairs`` (t1kind, t1text, t2kind, t2text) =
+  let ``Lexes Token Pairs`` (t1kind, t1text, t2kind, t2text) =
     let tokens = Lex(t1text + t2text)
     Assert.Collection(tokens,
       System.Action<Token>(fun token ->
@@ -126,7 +126,7 @@ module Lexer =
 
   [<Theory>]
   [<MemberData(nameof GetTokenPairsWithWhiteSpaceData)>]
-  let ``Lexer Lexes Token Pairs With White Space`` (t1kind, t1text, wskind, wstext, t2kind, t2text) =
+  let ``Lexes Token Pairs With White Space`` (t1kind, t1text, wskind, wstext, t2kind, t2text) =
     let tokens = Lex(t1text + wstext + t2text)
     Assert.Collection(tokens,
       System.Action<Token>(fun token ->
