@@ -1,6 +1,6 @@
 ﻿namespace Gloon.Syntax
 
-module Lexer =
+module internal Lexer =
 
   open System
   open Gloon.Syntax

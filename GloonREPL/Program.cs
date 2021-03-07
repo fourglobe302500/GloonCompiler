@@ -4,8 +4,8 @@ using System.Collections.Generic;
 
 using Gloon;
 using Gloon.Symbols;
-using Gloon.Compiler;
 using Gloon.Syntax;
+using Gloon.Compiler;
 
 namespace GloonREPL
 {
@@ -51,7 +51,7 @@ namespace GloonREPL
         }
         else
         {
-          var syntaxTree = Parser.Parse(line);
+          var syntaxTree = Parsing.Parse(line);
           var compilation = new Compilation(syntaxTree);
           if (CST) Utils.printCST(syntaxTree.ToExpression());
           var result = compilation.Evaluate(variables);

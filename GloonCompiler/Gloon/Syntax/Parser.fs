@@ -1,6 +1,6 @@
 ﻿namespace Gloon.Syntax
 
-module Parser =
+module internal Parser =
 
   open Gloon.Text
   open Gloon.Syntax

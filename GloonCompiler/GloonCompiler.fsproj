@@ -12,6 +12,7 @@
     <Compile Include="Gloon\Syntax\Facts.fs" />
     <Compile Include="Gloon\Syntax\Lexer.fs" />
     <Compile Include="Gloon\Syntax\Parser.fs" />
+    <Compile Include="Gloon\Syntax\Parsing.fs" />
     <Compile Include="Gloon\Binding\BoundTypes.fs" />
     <Compile Include="Gloon\Binding\Binder.fs" />
     <Compile Include="Gloon\Evaluation\Evaluator.fs" />
