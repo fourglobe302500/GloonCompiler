@@ -1,4 +1,4 @@
-module Program =
-  [<EntryPoint>]
-  let main _ =
-    0
+﻿module program
+
+[<EntryPoint>]
+let main _ = 0
