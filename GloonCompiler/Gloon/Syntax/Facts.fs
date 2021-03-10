@@ -5,21 +5,21 @@ module Facts =
 
   type TokenKind with
     member this.BinaryOperatorPrecedence = this |> function
-      | PowerToken ->             (7, true )
-      | PercentToken ->           (7, true )
-      | StarToken ->              (6, false)
-      | SlashToken ->             (6, false)
-      | MinusToken ->             (5, false)
-      | PlusToken ->              (5, false)
-      | LessThanEqualsToken ->    (4, false)
-      | LessThanToken ->          (4, false)
-      | GreaterThanEqualsToken -> (4, false)
-      | GreaterThanToken ->       (4, false)
-      | DoubleEqualsToken ->      (3, false)
-      | BangEqualsToken ->        (3, false)
-      | DoubleAmpersandToken ->   (2, false)
-      | DoublePipeToken ->        (1, false)
-      | _ ->                      (0, false)
+      | PowerToken ->             7
+      | PercentToken ->           7
+      | StarToken ->              6
+      | SlashToken ->             6
+      | MinusToken ->             5
+      | PlusToken ->              5
+      | LessThanEqualsToken ->    4
+      | LessThanToken ->          4
+      | GreaterThanEqualsToken -> 4
+      | GreaterThanToken ->       4
+      | DoubleEqualsToken ->      3
+      | BangEqualsToken ->        3
+      | DoubleAmpersandToken ->   2
+      | DoublePipeToken ->        1
+      | _ ->                      0
 
     member this.UnaryOperatorPrecedence = this |> function
       | PlusToken ->  1
@@ -34,7 +34,7 @@ module Facts =
       | Identifier i -> i
       | WhiteSpaceToken w -> w
       | InvallidToken i -> i
-      | EndOfFileToken -> "\0"
+      | EndOfFileToken -> "\000"
       | IncrementToken -> "++"
       | PlusToken -> "+"
       | DecrementToken -> "--"
@@ -56,3 +56,33 @@ module Facts =
       | DoublePipeToken -> "||"
       | OpenParenToken -> "("
       | CloseParenToken -> ")"
+
+    static member GetAll () = seq {
+      NumberLiteralToken 0
+      BooleanLiteralToken false
+      Identifier "a"
+      WhiteSpaceToken " "
+      InvallidToken "$"
+      EndOfFileToken
+      PlusToken
+      IncrementToken
+      MinusToken
+      DecrementToken
+      StarToken
+      PowerToken
+      SlashToken
+      RootToken
+      PercentToken
+      BangToken
+      BangEqualsToken
+      EqualsToken
+      DoubleEqualsToken
+      GreaterThanEqualsToken
+      GreaterThanToken
+      LessThanEqualsToken
+      LessThanToken
+      DoubleAmpersandToken
+      DoublePipeToken
+      OpenParenToken
+      CloseParenToken
+    }
