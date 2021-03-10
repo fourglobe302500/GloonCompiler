@@ -86,3 +86,9 @@ module Facts =
       OpenParenToken
       CloseParenToken
     }
+
+    static member GetBinaryOperators () =
+      TokenKind.GetAll() |> Seq.filter (fun t -> t.BinaryOperatorPrecedence > 0)
+
+    static member GetUnaryOperators () =
+      TokenKind.GetAll() |> Seq.filter (fun t -> t.UnaryOperatorPrecedence > 0)
