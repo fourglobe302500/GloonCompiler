@@ -12,6 +12,7 @@
     <Compile Include="Gloon\Syntax\FactsTests.fs" />
     <Compile Include="Gloon\Syntax\LexerTests.fs" />
     <Compile Include="Gloon\Syntax\ParserTests.fs" />
+    <Compile Include="Gloon\Evaluation\EvaluatorTests.fs" />
     <Compile Include="program.fs" />
   </ItemGroup>
 
