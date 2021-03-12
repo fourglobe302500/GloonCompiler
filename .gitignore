@@ -579,3 +579,4 @@ $RECYCLE.BIN/
 # Dev running snnipet
 *.ps1
 *.cmd
+*.fsx

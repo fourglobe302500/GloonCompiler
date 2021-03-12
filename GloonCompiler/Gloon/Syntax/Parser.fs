@@ -1,6 +1,6 @@
 ﻿namespace Gloon.Syntax
 
-module Parser =
+module internal Parser =
 
   open Gloon.Text
   open Gloon.Syntax
@@ -57,8 +57,8 @@ module Parser =
       let mutable left = parseUnaryPrefixExpression ()
       let mutable Break = false
       while not Break do
-        let (precedence, right) = currentKind().BinaryOperatorPrecedence
-        if precedence = 0 || (if right then precedence < parentPrecedence else precedence <= parentPrecedence)
+        let precedence = currentKind().BinaryOperatorPrecedence
+        if precedence = 0 || precedence <= parentPrecedence
         then Break <- true
         else left <- BinaryExpression (left, next (), parseBinaryExpression precedence)
       left

@@ -21,4 +21,4 @@ type Compilation (tree: CST) =
     let (expression,diagnostics,_) = bind c.Tree variables
     if diagnostics.Length > 0
     then {Diagnostics = diagnostics; Value = null}
-    else {Diagnostics = diagnostics; Value = Evaluate expression variables}
+    else {Diagnostics = []; Value = Evaluate expression variables}
