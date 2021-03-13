@@ -150,11 +150,13 @@ and SyntaxNode =
     node.Children |>
     List.iter (fun n -> n.PrettyPrint(writer, indent + (if not last then "│   " else if first then "" else "    "), false, n.Match(lastNode.Value)))
 
-and CST (root: ExpressionSyntax, endOfFileToken: Token, diagnostics: DiagnosticsBag) =
+and CST (text: SourceText, root: ExpressionSyntax, endOfFileToken: Token, diagnostics: DiagnosticsBag) =
+  let text = text
   let root = root
   let endOfFileToken = endOfFileToken
   let diagnostics = diagnostics
 
+  member _.Text = text
   member _.Root = root
   member _.Span = root.Span
   member _.EndOfFileToken = endOfFileToken

@@ -18,7 +18,7 @@ module Parser =
     let op1Precendece = op1.BinaryOperatorPrecedence
     let op2Precendece = op2.BinaryOperatorPrecedence
     let text = $"a {op1.Text} b {op2.Text} c"
-    let expression = Parse text
+    let expression = ParseString text
     let Default = (
       LiteralExpression {Position = 0; Text = "0"; Kind = NumberLiteralToken 0; Value = 0},
       {Position = 0; Text = "+"; Kind = PlusToken; Value = null},

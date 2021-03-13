@@ -51,25 +51,30 @@ namespace GloonREPL
         }
         else
         {
-          var syntaxTree = Parsing.Parse(line);
+          var syntaxTree = Parsing.ParseString(line);
           var compilation = new Compilation(syntaxTree);
           if (CST) SyntaxNode.NewCST(syntaxTree).WriteTo(Console.Out);
           var result = compilation.Evaluate(variables);
           if (result.Diagnostics.Any())
           {
-            Console.WriteLine();
+            var text = syntaxTree.Text;
+
             result.Diagnostics.ToList().ForEach(diag =>
             {
+              var lineIndex = text.GetLineIndex(diag.Span.Start);
+              var lineNumber = lineIndex + 1;
+              var character = diag.Span.Start - text.Lines[lineIndex].Span.Start + 1;
+              Console.WriteLine();
               Console.ForegroundColor = ConsoleColor.Red;
-              Console.WriteLine(diag);
+              Console.WriteLine($"({ lineNumber}, { character}): " + diag);
               Console.ForegroundColor = ConsoleColor.DarkGray;
               Console.Write(" -> " + line[..diag.Span.Start]);
               Console.ForegroundColor = ConsoleColor.Red;
               Console.Write(line[diag.Span.Start..diag.Span.End]);
               Console.ForegroundColor = ConsoleColor.DarkGray;
               Console.WriteLine(line[diag.Span.End..]);
-              Console.WriteLine();
             });
+            Console.WriteLine();
           }
           else
           {

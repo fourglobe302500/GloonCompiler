@@ -16,7 +16,7 @@ module Facts =
     let text = kind.Text
     if (text = null || kind = EndOfFileToken) then ()
     else
-      let tokens = Lex(text)
+      let tokens = LexString(text)
       Assert.Collection(tokens,
         Action<Token>(fun t ->
           Assert.Equal(kind, t.Kind)

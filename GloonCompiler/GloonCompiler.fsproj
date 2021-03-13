@@ -6,6 +6,7 @@
   <ItemGroup>
     <Compile Include="Gloon\Symbols\VariableSymbol.fs" />
     <Compile Include="Gloon\Text\TextSpan.fs" />
+    <Compile Include="Gloon\Text\SourceText.fs" />
     <Compile Include="Gloon\Text\Diagnostic.fs" />
     <Compile Include="Gloon\Text\DiagnosticsBag.fs" />
     <Compile Include="Gloon\Syntax\Types.fs" />

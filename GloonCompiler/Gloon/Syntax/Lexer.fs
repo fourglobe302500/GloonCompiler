@@ -7,19 +7,19 @@ module internal Lexer =
   open Gloon.Syntax
   open Gloon.Syntax.Facts
 
-  let Lex (s: string) =
+  let Lex (text: SourceText) =
     let mutable position = 0
     let diagnostics = DiagnosticsBag ("GLOON::SYNTAX::LEXER")
 
     let peek x =
-      if position + x >= s.Length
+      if position + x >= text.Length
       then char 0
-      else s.[position + x]
+      else text.[position + x]
     let inline current () = peek 0
     let inline lookAhead () = peek 1
 
-    let inline text start = s.[start..position - 1]
-    let inline get amount = if position + amount >= s.Length then s.[position..s.Length-1] else s.[position..position+amount]
+    let inline get amount = if position + amount >= text.Length then text.[position..text.Length-1] else text.[position..position+amount]
+    let inline GetText start = text.[start..position - 1]
 
     let inline move x = position <- position + x
     let inline next () = move 1
@@ -44,7 +44,7 @@ module internal Lexer =
       let mutable kind = EndOfFileToken
       let mutable value = null
       match current () with
-      | _ when position >= s.Length -> next ()
+      | _ when position >= text.Length -> next ()
       | '+' when lookAhead () = '+' ->  move 2; kind <- IncrementToken
       | '+' ->                          move 1; kind <- PlusToken
       | '-' when lookAhead () = '-' ->  move 2; kind <- DecrementToken
@@ -68,12 +68,12 @@ module internal Lexer =
       | ')' ->                          move 1; kind <- CloseParenToken
       | n when Char.IsNumber n -> consume Char.IsNumber <| fun () ->
         let res = ref 0
-        if not (Int32.TryParse (text start, res))
-        then diagnostics.ReportInvallidNumber start (position - start) (text start); kind <- NumberLiteralToken 0
+        if not (Int32.TryParse (GetText start, res))
+        then diagnostics.ReportInvallidNumber start (position - start) (GetText start); kind <- NumberLiteralToken 0
         else kind <- NumberLiteralToken res.Value; value <- res.Value :> obj
-      | l when Char.IsLetter l -> consume Char.IsLetter <| fun () -> kind <- getKeywordKind (text start); value <- getKeywordValue (text start)
-      | w when Char.IsWhiteSpace w -> consume Char.IsWhiteSpace <| fun () -> kind <- WhiteSpaceToken (text start)
-      | _ -> diagnostics.ReportInvallidCharacter start (current ()); move 1; kind <- InvallidToken (text start)
+      | l when Char.IsLetter l -> consume Char.IsLetter <| fun () -> kind <- getKeywordKind (GetText start); value <- getKeywordValue (GetText start)
+      | w when Char.IsWhiteSpace w -> consume Char.IsWhiteSpace <| fun () -> kind <- WhiteSpaceToken (GetText start)
+      | _ -> diagnostics.ReportInvallidCharacter start (current ()); move 1; kind <- InvallidToken (GetText start)
       { Position = start; Text = kind.Text; Kind = kind; Value = value}
     let mutable Break = false
     let tokens = ResizeArray ()
