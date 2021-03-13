@@ -2,15 +2,19 @@
 
 module Lexer =
   open Gloon.Syntax
+  open Gloon.Syntax.Facts
   open Gloon.Syntax.Parsing
 
   open Xunit
+  open System.Linq
+  open System.Collections.Generic
 
   let private GetTokens () = [
       (TokenKind.NumberLiteralToken 0, "0")
       (TokenKind.NumberLiteralToken 10, "10")
       (TokenKind.Identifier "var", "var")
       (TokenKind.Identifier "abc", "abc")
+      (TokenKind.Identifier "a", "a")
       (TokenKind.BooleanLiteralToken true, "true")
       (TokenKind.BooleanLiteralToken false, "false")
       (TokenKind.IncrementToken, "++")
@@ -139,3 +143,13 @@ module Lexer =
         Assert.Equal(t2kind, token.Kind)
         Assert.Equal(t2text, token.Text)),
       System.Action<Token>(fun token -> Assert.Equal(TokenKind.EndOfFileToken, token.Kind)))
+
+  [<Fact>]
+  let ``Lexer Test All Tokens`` () =
+    let tokenKinds = TokenKind.GetAll()
+    let testedTokens = GetTokens().Concat(GetWhiteSpaceTokens()) |> Seq.map (fun (k, t) -> k)
+    let untestedTokens = new SortedSet<TokenKind>(tokenKinds)
+    untestedTokens.ExceptWith(testedTokens)
+    untestedTokens.Remove(EndOfFileToken) |> ignore
+    untestedTokens.Remove(InvallidToken "$") |> ignore
+    Assert.Empty(untestedTokens)
