@@ -44,7 +44,7 @@ module internal Lexer =
       let mutable kind = EndOfFileToken
       let mutable value = null
       match current () with
-      | _ when position >= text.Length -> next ()
+      | _ when position >= text.Length -> ()
       | '+' when lookAhead () = '+' ->  move 2; kind <- IncrementToken
       | '+' ->                          move 1; kind <- PlusToken
       | '-' when lookAhead () = '-' ->  move 2; kind <- DecrementToken
@@ -74,7 +74,7 @@ module internal Lexer =
       | l when Char.IsLetter l -> consume Char.IsLetter <| fun () -> kind <- getKeywordKind (GetText start); value <- getKeywordValue (GetText start)
       | w when Char.IsWhiteSpace w -> consume Char.IsWhiteSpace <| fun () -> kind <- WhiteSpaceToken (GetText start)
       | _ -> diagnostics.ReportInvallidCharacter start (current ()); move 1; kind <- InvallidToken (GetText start)
-      { Position = start; Text = kind.Text; Kind = kind; Value = value}
+      { Position = start; Text = GetText start; Kind = kind; Value = value}
     let mutable Break = false
     let tokens = ResizeArray ()
     while not Break do
