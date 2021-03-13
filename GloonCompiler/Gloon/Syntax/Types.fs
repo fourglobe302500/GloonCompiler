@@ -88,6 +88,17 @@ type ExpressionSyntax =
     | UnaryExpression        _ -> "Unary Expression"
     | ErrorExpression        _ -> "Error Expression"
 
+  member t.Match o =
+    match t, o with
+    | (ParenthesysExpression (o1,p1,c1)), (ParenthesysExpression (o2,p2,c2)) -> o1 = o2 && p1.Match(p2) && c1 = c2
+    | (LiteralExpression l1), (LiteralExpression l2) -> l1 = l2
+    | (IdentifierExpression i1), (IdentifierExpression i2) -> i1 = i2
+    | (AssignmentExpression (a1,eq1,ex1)), (AssignmentExpression (a2,eq2,ex2)) -> a1 = a2 && eq1 = eq2 && ex1.Match(ex2)
+    | (BinaryExpression (l1,o1,r1)), (BinaryExpression (l2,o2,r2)) -> l1.Match(l2) && o1 = o2 && r1.Match(r2)
+    | (UnaryExpression (o1,e1)), (UnaryExpression (o2,e2)) -> o1 = o2 && e1.Match(e2)
+    | (ErrorExpression e1), (ErrorExpression e2) -> e1 = e2
+    | _ -> false
+
   override x.Equals (y) =
     match x, y with
     | (ParenthesysExpression _), (:? ExpressionSyntax as p) -> match p with | ParenthesysExpression _ -> true | _ -> false
@@ -124,6 +135,11 @@ and SyntaxNode =
     | Expression   e -> e.ToString ()
     | Token        t -> t.ToString ()
     | CST          _ -> "Concrete Syntax Tree"
+
+  member t.Match o =
+    match t, o with
+    | Expression e1, Expression e2 -> e1.Match e2
+    | t, o -> t = o
 
 and CST (root: ExpressionSyntax, endOfFileToken: Token, diagnostics: DiagnosticsBag) =
   let root = root
