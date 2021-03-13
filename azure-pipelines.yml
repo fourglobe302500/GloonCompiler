@@ -11,12 +11,12 @@ parameters:
 - name:     operatingSystems
   type:     object
   default:
-  - name:     Ubuntu
-    vmImage:  ubuntu-latest
+  #- name:     Ubuntu
+    #vmImage:  ubuntu-latest
   - name:     Windows
     vmImage:  windows-latest
-  - name:     macOS
-    vmImage:  macOS-latest
+  #- name:     macOS
+    #vmImage:  macOS-latest
 - name:     configurations
   type:     object
   default:
