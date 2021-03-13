@@ -10,47 +10,52 @@ module internal Evaluator =
     let rec evaluate =
       function
       | LiteralExpression l -> l
-      | BinaryExpression (left,o,right) ->
-        match (evaluate left, evaluate right) with
-        | (:? int as l), (:? int as r) ->
-          match o.Kind with
-          | Addition -> upcast (l + r)
-          | Subtraction -> upcast (l - r)
-          | Multiplication -> upcast (l * r)
-          | Division -> upcast int (Math.Round (float (l / r)))
-          | Modulos -> upcast (l % r)
-          | Power -> upcast int (Math.Round ((float l) ** (float r)))
-          | GreaterThan -> upcast (l > r)
-          | GreaterThanOrEquals -> upcast (l >= r)
-          | LesserThan -> upcast (l < r)
-          | LesserThanOrEquals -> upcast (l <= r)
-          | Equals -> upcast (l = r)
-          | NotEquals -> upcast (l <> r)
-          | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Binary Operation")
-        | (:? bool as l), (:? bool as r) ->
-          match o.Kind with
-          | LogicalAnd -> upcast (l && r)
-          | LogicalOr -> upcast (l || r)
-          | Equals -> upcast (l = r)
-          | NotEquals -> upcast (l <> r)
-          | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Binary Operation")
-        | _ -> null
+      | UnaryExpression (o, e) -> EvaluateUnaryExpression (o) (evaluate e)
+      | BinaryExpression (left,o,right) -> EvaluateBinaryExpression(evaluate left, o,evaluate right)
       | VariableExpression i -> variables.GetValueOrDefault(i)
-      | AssignmentExpression (i, e) ->
-        let value = evaluate e
-        variables.[i] <- value
-        value
-      | UnaryExpression (o, e) ->
-        match evaluate e with
-        | :? int as op ->
-          match o.Kind with
-          | Identity -> upcast op
-          | Negation -> upcast -op
-          //| _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Unary Operation")
-        | :? bool as op ->
-          match o.Kind with
-          | Negation -> upcast not op
-          | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Unary Operation")
-        | _ -> null
+      | AssignmentExpression (i, e) -> EvaluateAssigmentExpression (i, evaluate e)
       | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invaliid Expression")
+
+    and EvaluateUnaryExpression o = function
+    | :? int as op ->
+      match o.Kind with
+      | Identity -> upcast op
+      | Negation -> upcast -op
+      //| _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Unary Operation")
+    | :? bool as op ->
+      match o.Kind with
+      | Negation -> upcast not op
+      | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Unary Operation")
+    | _ -> null
+
+    and EvaluateBinaryExpression (left, o, right) =
+      match (left, right) with
+      | (:? int as l), (:? int as r) ->
+        match o.Kind with
+        | Addition -> upcast (l + r)
+        | Subtraction -> upcast (l - r)
+        | Multiplication -> upcast (l * r)
+        | Division -> upcast int (Math.Round (float (l / r)))
+        | Modulos -> upcast (l % r)
+        | Power -> upcast int (Math.Round ((float l) ** (float r)))
+        | GreaterThan -> upcast (l > r)
+        | GreaterThanOrEquals -> upcast (l >= r)
+        | LesserThan -> upcast (l < r)
+        | LesserThanOrEquals -> upcast (l <= r)
+        | Equals -> upcast (l = r)
+        | NotEquals -> upcast (l <> r)
+        | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Binary Operation")
+      | (:? bool as l), (:? bool as r) ->
+        match o.Kind with
+        | LogicalAnd -> upcast (l && r)
+        | LogicalOr -> upcast (l || r)
+        | Equals -> upcast (l = r)
+        | NotEquals -> upcast (l <> r)
+        | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Binary Operation")
+      | _ -> null
+
+    and EvaluateAssigmentExpression (i, e) =
+      variables.[i] <- e
+      e
+
     evaluate node
