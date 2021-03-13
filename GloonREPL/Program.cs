@@ -53,7 +53,7 @@ namespace GloonREPL
         {
           var syntaxTree = Parsing.Parse(line);
           var compilation = new Compilation(syntaxTree);
-          if (CST) Utils.printCST(syntaxTree.ToExpression());
+          if (CST) SyntaxNode.NewCST(syntaxTree).WriteTo(Console.Out);
           var result = compilation.Evaluate(variables);
           if (result.Diagnostics.Any())
           {

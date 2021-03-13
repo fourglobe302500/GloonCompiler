@@ -2,6 +2,7 @@
 
 open Gloon.Text
 open System
+open System.IO
 
 type TokenKind =
   | NumberLiteralToken    of int
@@ -140,6 +141,14 @@ and SyntaxNode =
     match t, o with
     | Expression e1, Expression e2 -> e1.Match e2
     | t, o -> t = o
+
+  member node.WriteTo writer = node.PrettyPrint(writer, "", true, true)
+
+  member private node.PrettyPrint (writer: TextWriter, indent, first, last) =
+    writer.WriteLine("{0}{1}{2}", indent, (if first then "" else if last then "└── " else "├── "), node)
+    let lastNode = node.Children |> List.tryLast
+    node.Children |>
+    List.iter (fun n -> n.PrettyPrint(writer, indent + (if not last then "│   " else if first then "" else "    "), false, n.Match(lastNode.Value)))
 
 and CST (root: ExpressionSyntax, endOfFileToken: Token, diagnostics: DiagnosticsBag) =
   let root = root
