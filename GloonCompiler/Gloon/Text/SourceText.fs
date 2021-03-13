@@ -52,7 +52,8 @@ type SourceText private (text: string) as src =
     while lower < upper do
       let index = lower + (upper - lower) / 2
       let start = lines.[index].Start
-      if position = start then upper <- index; lower <- index
+      let End = lines.[index].End
+      if start <= position && position < End then upper <- index; lower <- index
       elif position < start then upper <- index - 1
       else lower <- index + 1
     upper
