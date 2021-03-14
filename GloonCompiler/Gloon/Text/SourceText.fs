@@ -40,7 +40,7 @@ type SourceText private (text: string) as src =
         position <- position + lineBreakWidth
         lineStart <- position
 
-    if position > lineStart then AddLine 0
+    if position >= lineStart then AddLine 0
 
     result.ToImmutable()
 

@@ -76,7 +76,7 @@ namespace GloonREPL
               Console.ForegroundColor = ConsoleColor.Red;
               Console.WriteLine($"({ lineNumber}, { character}): " + diag);
               Console.ForegroundColor = ConsoleColor.DarkGray;
-              Console.Write(" -> " + text[line.Start..diag.Span.Start]);
+              Console.Write(" line -> " + text[line.Start..diag.Span.Start]);
               Console.ForegroundColor = ConsoleColor.Red;
               Console.Write(text[diag.Span.Start..diag.Span.End]);
               Console.ForegroundColor = ConsoleColor.DarkGray;
