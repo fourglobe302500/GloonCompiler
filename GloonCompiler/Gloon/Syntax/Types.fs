@@ -145,7 +145,16 @@ and SyntaxNode =
   member node.WriteTo writer = node.PrettyPrint(writer, "", true, true)
 
   member private node.PrettyPrint (writer: TextWriter, indent, first, last) =
-    writer.WriteLine("{0}{1}{2}", indent, (if first then "" else if last then "└── " else "├── "), node)
+    let isToConsole = writer = Console.Out
+    if isToConsole then Console.ForegroundColor <- ConsoleColor.DarkGray
+    writer.Write("{0}{1}", indent, (if first then "" else if last then "└── " else "├── "))
+    if isToConsole then
+      Console.ForegroundColor <-
+        match node with
+        | Expression _ -> ConsoleColor.Cyan
+        | Token _ -> ConsoleColor.Blue
+        | CST _ -> ConsoleColor.Yellow
+    writer.WriteLine(node)
     let lastNode = node.Children |> List.tryLast
     node.Children |>
     List.iter (fun n -> n.PrettyPrint(writer, indent + (if not last then "│   " else if first then "" else "    "), false, n.Match(lastNode.Value)))

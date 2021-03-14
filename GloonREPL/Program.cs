@@ -20,7 +20,7 @@ namespace GloonREPL
 
       while (true)
       {
-        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.ForegroundColor = ConsoleColor.Green;
         Console.Write(textBuilder.Length == 0 ? "» " : "· ");
         Console.ForegroundColor = ConsoleColor.White;
         var input = Console.ReadLine();
@@ -86,7 +86,7 @@ namespace GloonREPL
           }
           else
           {
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.ForegroundColor = ConsoleColor.Magenta;
             Console.WriteLine(result.Value);
           }
           textBuilder.Clear();
