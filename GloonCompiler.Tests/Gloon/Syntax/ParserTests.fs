@@ -3,7 +3,6 @@
 module Parser =
   open Gloon.Syntax
   open Gloon.Syntax.Facts
-  open Gloon.Tests.Syntax
 
   open Xunit
 
@@ -18,31 +17,17 @@ module Parser =
     let op2Precendece = op2.BinaryOperatorPrecedence
     let text = $"a {op1.Text} b {op2.Text} c"
     let syntaxTree = SyntaxTree.Parse text
-    let Default = (
-      LiteralExpression {Position = 0; Text = "0"; Kind = NumberLiteralToken 0; Value = 0},
-      {Position = 0; Text = "+"; Kind = PlusToken; Value = null},
-      LiteralExpression {Position = 0; Text = "0"; Kind = NumberLiteralToken 0; Value = 0})
+    let aToken   = {Position = 0; Text = "a"; Kind = Identifier "a"; Value = "a"}
+    let op1Token = {Position = 2; Text = op1.Text; Kind = op1; Value = null}
+    let bToken   = {Position = 3 + op1.Text.Length; Text = "b"; Kind = Identifier "b"; Value = "b"}
+    let op2Token = {Position = 5 + op1.Text.Length; Text = op2.Text; Kind = op2; Value = null}
+    let cToken   = {Position = 6 + op1.Text.Length + op2.Text.Length; Text = "c"; Kind = Identifier "c"; Value = "c"}
+    let aExpression = IdentifierExpression aToken
+    let bExpression = IdentifierExpression bToken
+    let cExpression = IdentifierExpression cToken
     if op1Precendece >= op2Precendece then
-      use e = new AssertingEnumerator(SyntaxNode.Expression syntaxTree.Expression)
-      e.AssertNode (BinaryExpression Default)
-      e.AssertNode (BinaryExpression Default)
-      e.AssertNode (IdentifierExpression {Position = 0; Text = "a"; Kind = Identifier "a"; Value = null})
-      e.AssertToken (Identifier "a") "a"
-      e.AssertToken op1 op1.Text
-      e.AssertNode (IdentifierExpression {Position = 0; Text = "b"; Kind = Identifier "b"; Value = null})
-      e.AssertToken (Identifier "b") "b"
-      e.AssertToken op2 op2.Text
-      e.AssertNode (IdentifierExpression {Position = 0; Text = "c"; Kind = Identifier "c"; Value = null})
-      e.AssertToken (Identifier "c") "c"
+      let expr = BinaryExpression (BinaryExpression(aExpression, op1Token, bExpression), op2Token, cExpression)
+      Assert.Equal(expr, syntaxTree.Expression)
     else
-      use e = new AssertingEnumerator(SyntaxNode.Expression syntaxTree.Expression)
-      e.AssertNode (BinaryExpression Default)
-      e.AssertNode (IdentifierExpression {Position = 0; Text = "a"; Kind = Identifier "a"; Value = null})
-      e.AssertToken (Identifier "a") "a"
-      e.AssertToken op1 op1.Text
-      e.AssertNode (BinaryExpression Default)
-      e.AssertNode (IdentifierExpression {Position = 0; Text = "b"; Kind = Identifier "b"; Value = null})
-      e.AssertToken (Identifier "b") "b"
-      e.AssertToken op2 op2.Text
-      e.AssertNode (IdentifierExpression {Position = 0; Text = "c"; Kind = Identifier "c"; Value = null})
-      e.AssertToken (Identifier "c") "c"
+      let expr = BinaryExpression (aExpression, op1Token, BinaryExpression(bExpression, op2Token, cExpression))
+      Assert.Equal(expr, syntaxTree.Expression)

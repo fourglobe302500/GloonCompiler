@@ -3,7 +3,6 @@
 open Gloon.Text
 open System
 open System.IO
-open System.Collections.Immutable
 
 type TokenKind =
   | NumberLiteralToken    of int
@@ -51,8 +50,6 @@ type Token =
 
   override this.ToString () = this.Kind.ToString()
 
-[<CustomEquality>]
-[<CustomComparison>]
 type ExpressionSyntax =
   | ParenthesysExpression of OpenParen: Token * Expr: ExpressionSyntax * CloseParen: Token
   | LiteralExpression     of LiteralToken: Token
@@ -66,9 +63,9 @@ type ExpressionSyntax =
     match e with
     | LiteralExpression                      n  -> n.Span
     | IdentifierExpression                   i  -> i.Span
-    | AssignmentExpression         (i, e, expr) -> i.Span + expr.Span
-    | ParenthesysExpression        (op, e, cp)  -> op.Span + cp.Span
-    | BinaryExpression (left, operator, right)  -> left.Span + right.Span
+    | AssignmentExpression         (i, _, expr) -> i.Span + expr.Span
+    | ParenthesysExpression        (op, _, cp)  -> op.Span + cp.Span
+    | BinaryExpression        (left, _, right)  -> left.Span + right.Span
     | UnaryExpression      (operator, operand)  -> operator.Span + operand.Span
     | ErrorExpression                        e  -> e.Span
 
@@ -89,33 +86,6 @@ type ExpressionSyntax =
     | BinaryExpression       _ -> "Binary Expression"
     | UnaryExpression        _ -> "Unary Expression"
     | ErrorExpression        _ -> "Error Expression"
-
-  member t.Match o =
-    match t, o with
-    | (ParenthesysExpression (o1,p1,c1)), (ParenthesysExpression (o2,p2,c2)) -> o1 = o2 && p1.Match(p2) && c1 = c2
-    | (LiteralExpression l1), (LiteralExpression l2) -> l1 = l2
-    | (IdentifierExpression i1), (IdentifierExpression i2) -> i1 = i2
-    | (AssignmentExpression (a1,eq1,ex1)), (AssignmentExpression (a2,eq2,ex2)) -> a1 = a2 && eq1 = eq2 && ex1.Match(ex2)
-    | (BinaryExpression (l1,o1,r1)), (BinaryExpression (l2,o2,r2)) -> l1.Match(l2) && o1 = o2 && r1.Match(r2)
-    | (UnaryExpression (o1,e1)), (UnaryExpression (o2,e2)) -> o1 = o2 && e1.Match(e2)
-    | (ErrorExpression e1), (ErrorExpression e2) -> e1 = e2
-    | _ -> false
-
-  override x.Equals (y) =
-    match x, y with
-    | (ParenthesysExpression _), (:? ExpressionSyntax as p) -> match p with | ParenthesysExpression _ -> true | _ -> false
-    | (LiteralExpression _), (:? ExpressionSyntax as l) -> match l with | LiteralExpression _ -> true | _ -> false
-    | (IdentifierExpression _), (:? ExpressionSyntax as i) -> match i with | IdentifierExpression _ -> true | _ -> false
-    | (AssignmentExpression _), (:? ExpressionSyntax as a) -> match a with | AssignmentExpression _ -> true | _ -> false
-    | (BinaryExpression _), (:? ExpressionSyntax as b) -> match b with | BinaryExpression _ -> true | _ -> false
-    | (UnaryExpression _), (:? ExpressionSyntax as u) -> match u with | UnaryExpression _ -> true | _ -> false
-    | (ErrorExpression _), (:? ExpressionSyntax as e) -> match e with | ErrorExpression _ -> true | _ -> false
-    | _ -> false
-
-  override x.GetHashCode () = 0
-
-  interface IComparable<ExpressionSyntax> with
-    member this.CompareTo(other: ExpressionSyntax): int = 0
 
 and CompilationUnit (root: ExpressionSyntax, endOfFileToken: Token) =
   let root = root
@@ -147,11 +117,6 @@ and SyntaxNode =
     | Token           t -> t.ToString ()
     | CompilationUnit _ -> "Compilation Unit"
 
-  member t.Match o =
-    match t, o with
-    | Expression e1, Expression e2 -> e1.Match e2
-    | t, o -> t = o
-
   member node.WriteTo writer = node.PrettyPrint(writer, "", true, true)
 
   member private node.PrettyPrint (writer: TextWriter, indent, first, last) =
@@ -167,4 +132,4 @@ and SyntaxNode =
     writer.WriteLine(node)
     let lastNode = node.Children |> List.tryLast
     node.Children |>
-    List.iter (fun n -> n.PrettyPrint(writer, indent + (if not last then "│   " else if first then "" else "    "), false, n.Match(lastNode.Value)))
+    List.iter (fun n -> n.PrettyPrint(writer, indent + (if not last then "│   " else if first then "" else "    "), false, (n = lastNode.Value)))
