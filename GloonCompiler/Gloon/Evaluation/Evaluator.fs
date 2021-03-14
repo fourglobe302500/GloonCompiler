@@ -52,6 +52,9 @@ module internal Evaluator =
         | Equals -> upcast (l = r)
         | NotEquals -> upcast (l <> r)
         | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invallid Binary Operation")
+      | null, null -> raise (Exception "GLOON::EVALUATION::EVALUATOR Cannot cast left and right value null to any know type")
+      | null, _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Cannot cast left value null to any know type")
+      | _, null -> raise (Exception "GLOON::EVALUATION::EVALUATOR Cannot cast right value null to any know type")
       | _ -> null
 
     and EvaluateAssigmentExpression (i, e) =
