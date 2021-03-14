@@ -86,7 +86,9 @@ type internal Binder (parent: BoundScope option) =
     | ErrorExpression e ->
       ErrorExpression e
     | _ ->
-      if boundExpr.Type <> variable.Type then
+      if variable.Type = null then
+        ErrorExpression i.Text
+      elif boundExpr.Type <> variable.Type then
         diagnostics.ReportCannotConvert e.Span boundExpr.Type variable.Type
         ErrorExpression i.Text
       else
