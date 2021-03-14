@@ -2,15 +2,19 @@
 
 module Lexer =
   open Gloon.Syntax
+  open Gloon.Syntax.Facts
   open Gloon.Syntax.Parsing
 
   open Xunit
+  open System.Linq
+  open System.Collections.Generic
 
   let private GetTokens () = [
       (TokenKind.NumberLiteralToken 0, "0")
       (TokenKind.NumberLiteralToken 10, "10")
       (TokenKind.Identifier "var", "var")
       (TokenKind.Identifier "abc", "abc")
+      (TokenKind.Identifier "a", "a")
       (TokenKind.BooleanLiteralToken true, "true")
       (TokenKind.BooleanLiteralToken false, "false")
       (TokenKind.IncrementToken, "++")
@@ -49,7 +53,7 @@ module Lexer =
   [<TheoryAttribute>]
   [<MemberData(nameof GetTokensData)>]
   let ``Lexes Token`` (kind, text) =
-    let tokens = Lex(text)
+    let tokens = LexString(text)
     Assert.Collection(tokens,
       System.Action<Token>(fun token ->
         Assert.Equal(kind, token.Kind)
@@ -102,7 +106,7 @@ module Lexer =
   [<Theory>]
   [<MemberData(nameof GetTokenPairsData)>]
   let ``Lexes Token Pairs`` (t1kind, t1text, t2kind, t2text) =
-    let tokens = Lex(t1text + t2text)
+    let tokens = LexString(t1text + t2text)
     Assert.Collection(tokens,
       System.Action<Token>(fun token ->
         Assert.Equal(t1kind, token.Kind)
@@ -127,7 +131,7 @@ module Lexer =
   [<Theory>]
   [<MemberData(nameof GetTokenPairsWithWhiteSpaceData)>]
   let ``Lexes Token Pairs With White Space`` (t1kind, t1text, wskind, wstext, t2kind, t2text) =
-    let tokens = Lex(t1text + wstext + t2text)
+    let tokens = LexString(t1text + wstext + t2text)
     Assert.Collection(tokens,
       System.Action<Token>(fun token ->
         Assert.Equal(t1kind, token.Kind)
@@ -139,3 +143,13 @@ module Lexer =
         Assert.Equal(t2kind, token.Kind)
         Assert.Equal(t2text, token.Text)),
       System.Action<Token>(fun token -> Assert.Equal(TokenKind.EndOfFileToken, token.Kind)))
+
+  [<Fact>]
+  let ``Lexer Test All Tokens`` () =
+    let tokenKinds = TokenKind.GetAll()
+    let testedTokens = GetTokens().Concat(GetWhiteSpaceTokens()) |> Seq.map (fun (k, t) -> k)
+    let untestedTokens = new SortedSet<TokenKind>(tokenKinds)
+    untestedTokens.ExceptWith(testedTokens)
+    untestedTokens.Remove(EndOfFileToken) |> ignore
+    untestedTokens.Remove(InvallidToken "$") |> ignore
+    Assert.Empty(untestedTokens)

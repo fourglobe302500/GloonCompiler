@@ -62,7 +62,7 @@ module EvaluatorTests =
   [<InlineData("(a = 4) * 0 + a ** a", 256)>]
 
   let ``Evaluator Evaluates`` (expression, expectedValue) =
-    let tree = Parse expression
+    let tree = ParseString expression
     let compilation = Compilation tree
     let variables = new Dictionary<VariableSymbol, obj>()
     let result = compilation.Evaluate(variables)

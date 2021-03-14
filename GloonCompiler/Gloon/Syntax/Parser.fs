@@ -7,8 +7,8 @@ module internal Parser =
   open Gloon.Syntax.Facts
   open Gloon.Syntax.Lexer
 
-  let Parse line =
-    let (tokens_, diagnostics_) = Lex line
+  let Parse text =
+    let (tokens_, diagnostics_) = Lex text
     let tokens = tokens_ |> Seq.filter (fun t ->
       match t.Kind with
       | WhiteSpaceToken _ -> false
@@ -24,17 +24,16 @@ module internal Parser =
     let inline lookAhead () = peek 1
     let inline currentKind () = (current ()).Kind
 
-    let next () =
+    let inline next () =
       let current = current ()
       position <- position + 1
       current
 
-    let inline matchToken (kind: TokenKind) =
-      match (current ()).Kind with
-      | k when k = kind -> next()
-      | _ ->
-        diagnostics.ReportUnexpectedKind "Token" (current()) kind
-        {next () with Text = ""; Kind = kind; Value = null}
+    let matchToken = function
+    | k when k = currentKind() -> next()
+    | kind ->
+      diagnostics.ReportUnexpectedKind "Token" (current()) kind
+      {next () with Text = ""; Kind = kind; Value = null}
 
     let rec parsePrimaryExpression () =
       match currentKind() with
@@ -65,4 +64,4 @@ module internal Parser =
 
     and parseExpression () = parseBinaryExpression 0
 
-    CST (parseExpression (), matchToken(EndOfFileToken), diagnostics)
+    CST (text, parseExpression (), matchToken(EndOfFileToken), diagnostics)

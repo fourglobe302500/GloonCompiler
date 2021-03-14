@@ -6,6 +6,7 @@ using Gloon;
 using Gloon.Symbols;
 using Gloon.Syntax;
 using Gloon.Compiler;
+using System.Text;
 
 namespace GloonREPL
 {
@@ -15,17 +16,21 @@ namespace GloonREPL
     {
       var CST = false;
       var variables = new Dictionary<VariableSymbol, object>();
+      var textBuilder = new StringBuilder();
+
       while (true)
       {
         Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.Write("> ");
+        Console.Write(textBuilder.Length == 0 ? "» " : "· ");
         Console.ForegroundColor = ConsoleColor.White;
-        var line = Console.ReadLine();
-        if (string.IsNullOrEmpty(line))
-          return;
-        if (line.StartsWith('#'))
+        var input = Console.ReadLine();
+        var isBlank = string.IsNullOrEmpty(input);
+        if (isBlank && textBuilder.Length == 0)
+          break;
+        if (input.StartsWith('#') && textBuilder.Length == 0)
         {
-          switch (line)
+          if (string.IsNullOrEmpty(input)) return;
+          switch (input)
           {
             case "#cls":
               Console.Clear();
@@ -51,31 +56,40 @@ namespace GloonREPL
         }
         else
         {
-          var syntaxTree = Parsing.Parse(line);
+          textBuilder.AppendLine(input);
+          var text = textBuilder.ToString();
+          var syntaxTree = Parsing.ParseString(text);
+          if (!isBlank && syntaxTree.Diagnostics.Any())
+            continue;
           var compilation = new Compilation(syntaxTree);
-          if (CST) Utils.printCST(syntaxTree.ToExpression());
+          if (CST) SyntaxNode.NewCST(syntaxTree).WriteTo(Console.Out);
           var result = compilation.Evaluate(variables);
           if (result.Diagnostics.Any())
           {
-            Console.WriteLine();
             result.Diagnostics.ToList().ForEach(diag =>
             {
-              Console.ForegroundColor = ConsoleColor.Red;
-              Console.WriteLine(diag);
-              Console.ForegroundColor = ConsoleColor.DarkGray;
-              Console.Write(" -> " + line[..diag.Span.Start]);
-              Console.ForegroundColor = ConsoleColor.Red;
-              Console.Write(line[diag.Span.Start..diag.Span.End]);
-              Console.ForegroundColor = ConsoleColor.DarkGray;
-              Console.WriteLine(line[diag.Span.End..]);
+              var lineIndex = syntaxTree.Text.GetLineIndex(diag.Span.Start);
+              var line = syntaxTree.Text.Lines[lineIndex];
+              var lineNumber = lineIndex + 1;
+              var character = diag.Span.Start - line.Span.Start + 1;
               Console.WriteLine();
+              Console.ForegroundColor = ConsoleColor.Red;
+              Console.WriteLine($"({ lineNumber}, { character}): " + diag);
+              Console.ForegroundColor = ConsoleColor.DarkGray;
+              Console.Write(" line -> " + text[line.Start..diag.Span.Start]);
+              Console.ForegroundColor = ConsoleColor.Red;
+              Console.Write(text[diag.Span.Start..diag.Span.End]);
+              Console.ForegroundColor = ConsoleColor.DarkGray;
+              Console.WriteLine(text[diag.Span.End..line.End]);
             });
+            Console.WriteLine();
           }
           else
           {
             Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine(result.Value);
           }
+          textBuilder.Clear();
         }
       }
     }

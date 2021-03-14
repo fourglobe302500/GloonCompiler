@@ -6,6 +6,7 @@
   <ItemGroup>
     <Compile Include="Gloon\Symbols\VariableSymbol.fs" />
     <Compile Include="Gloon\Text\TextSpan.fs" />
+    <Compile Include="Gloon\Text\SourceText.fs" />
     <Compile Include="Gloon\Text\Diagnostic.fs" />
     <Compile Include="Gloon\Text\DiagnosticsBag.fs" />
     <Compile Include="Gloon\Syntax\Types.fs" />
@@ -17,7 +18,9 @@
     <Compile Include="Gloon\Binding\Binder.fs" />
     <Compile Include="Gloon\Evaluation\Evaluator.fs" />
     <Compile Include="Gloon\Compiler\Compilation.fs" />
-    <Compile Include="Gloon\Utils.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Collections.Immutable" Version="5.0.0" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="5.0.1" />

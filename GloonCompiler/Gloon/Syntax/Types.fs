@@ -2,6 +2,7 @@
 
 open Gloon.Text
 open System
+open System.IO
 
 type TokenKind =
   | NumberLiteralToken    of int
@@ -41,10 +42,11 @@ type Token =
   }
 
   interface IReportable with
-    member t.GetSpan () =
-      TextSpan(t.Position, t.Text.Length)
+    member t.GetSpan () = t.Span
     member t.GetKind () = t.Kind.ToString()
     member t.GetText () = t.Text
+
+  member t.Span = TextSpan(t.Position, t.Text.Length)
 
   override this.ToString () = this.Kind.ToString()
 
@@ -58,6 +60,16 @@ type ExpressionSyntax =
   | BinaryExpression      of Left: ExpressionSyntax * Operator: Token * Right: ExpressionSyntax
   | UnaryExpression       of Operator: Token * Operand: ExpressionSyntax
   | ErrorExpression       of Error: Token
+
+  member e.Span =
+    match e with
+    | LiteralExpression                      n  -> n.Span
+    | IdentifierExpression                   i  -> i.Span
+    | AssignmentExpression         (i, e, expr) -> i.Span + expr.Span
+    | ParenthesysExpression        (op, e, cp)  -> op.Span + cp.Span
+    | BinaryExpression (left, operator, right)  -> left.Span + right.Span
+    | UnaryExpression      (operator, operand)  -> operator.Span + operand.Span
+    | ErrorExpression                        e  -> e.Span
 
   member this.Children = this |> function
     | LiteralExpression                      n  -> [Token n]
@@ -76,6 +88,17 @@ type ExpressionSyntax =
     | BinaryExpression       _ -> "Binary Expression"
     | UnaryExpression        _ -> "Unary Expression"
     | ErrorExpression        _ -> "Error Expression"
+
+  member t.Match o =
+    match t, o with
+    | (ParenthesysExpression (o1,p1,c1)), (ParenthesysExpression (o2,p2,c2)) -> o1 = o2 && p1.Match(p2) && c1 = c2
+    | (LiteralExpression l1), (LiteralExpression l2) -> l1 = l2
+    | (IdentifierExpression i1), (IdentifierExpression i2) -> i1 = i2
+    | (AssignmentExpression (a1,eq1,ex1)), (AssignmentExpression (a2,eq2,ex2)) -> a1 = a2 && eq1 = eq2 && ex1.Match(ex2)
+    | (BinaryExpression (l1,o1,r1)), (BinaryExpression (l2,o2,r2)) -> l1.Match(l2) && o1 = o2 && r1.Match(r2)
+    | (UnaryExpression (o1,e1)), (UnaryExpression (o2,e2)) -> o1 = o2 && e1.Match(e2)
+    | (ErrorExpression e1), (ErrorExpression e2) -> e1 = e2
+    | _ -> false
 
   override x.Equals (y) =
     match x, y with
@@ -98,6 +121,12 @@ and SyntaxNode =
   | Token         of Token
   | CST           of CST
 
+  member n.Span =
+    match n with
+    | Expression e -> e.Span
+    | Token t -> t.Span
+    | CST t -> t.Span
+
   member this.Children = this |> function
     | Expression   e -> e.Children
     | Token        _ -> []
@@ -108,12 +137,28 @@ and SyntaxNode =
     | Token        t -> t.ToString ()
     | CST          _ -> "Concrete Syntax Tree"
 
-and CST (root: ExpressionSyntax, endOfFileToken: Token, diagnostics: DiagnosticsBag) =
+  member t.Match o =
+    match t, o with
+    | Expression e1, Expression e2 -> e1.Match e2
+    | t, o -> t = o
+
+  member node.WriteTo writer = node.PrettyPrint(writer, "", true, true)
+
+  member private node.PrettyPrint (writer: TextWriter, indent, first, last) =
+    writer.WriteLine("{0}{1}{2}", indent, (if first then "" else if last then "└── " else "├── "), node)
+    let lastNode = node.Children |> List.tryLast
+    node.Children |>
+    List.iter (fun n -> n.PrettyPrint(writer, indent + (if not last then "│   " else if first then "" else "    "), false, n.Match(lastNode.Value)))
+
+and CST (text: SourceText, root: ExpressionSyntax, endOfFileToken: Token, diagnostics: DiagnosticsBag) =
+  let text = text
   let root = root
   let endOfFileToken = endOfFileToken
   let diagnostics = diagnostics
 
+  member _.Text = text
   member _.Root = root
+  member _.Span = root.Span
   member _.EndOfFileToken = endOfFileToken
   member _.Diagnostics = diagnostics.Diagnostics
   member _.Children = [Expression root; Token endOfFileToken]
