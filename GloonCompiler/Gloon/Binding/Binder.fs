@@ -1,69 +1,111 @@
 ﻿namespace Gloon.Binding
 
-module internal Binder =
+open System.Linq
+open System.Collections.Generic
+open System.Collections.Immutable
 
-  open System
-  open System.Collections.Generic
-  open System.Linq
-  open Gloon.Symbols
-  open Gloon.Text
-  open Gloon.Syntax
-  open Gloon.Binding.BoundTypes
+open Gloon.Symbols
+open Gloon.Text
+open Gloon.Syntax
+open Gloon.Binding
 
-  let internal bind (tree: SyntaxTree) (variables: Dictionary<VariableSymbol, obj>) =
-    let diagnostics = DiagnosticsBag ("GLOON::BINDING::BINDER", tree.Diagnostics)
+type internal Binder (parent: BoundScope option) =
+  let diagnostics = DiagnosticsBag ("GLOON::BINDING::BINDER")
+  let scope = BoundScope(parent)
 
-    let rec bindExpression = function
-    | ExpressionSyntax.ParenthesysExpression (_,e,_) -> bindExpression (e)
-    | ExpressionSyntax.LiteralExpression l -> bindLiteralExpression (l)
-    | ExpressionSyntax.IdentifierExpression i -> bindNameExpression (i)
-    | ExpressionSyntax.AssignmentExpression (i, _, e) -> bindAssigmentExpression (i, e)
-    | ExpressionSyntax.UnaryExpression (o, e) -> bindUnaryExpression (o, e)
-    | ExpressionSyntax.BinaryExpression (l,o,r) -> bindBinaryExpression (l, o, r)
-    | ExpressionSyntax.ErrorExpression e -> bindErrorExpression (e)
+  member _.Diagnostics = diagnostics
+  member private _.scope = scope
 
-    and bindLiteralExpression syntax : BoundExpression =
-      syntax.Value |> LiteralExpression
+  static member BindGlobalScope previous (syntax: CompilationUnit) =
+    let parent = Binder.CreateParentScope(previous)
+    let binder = Binder(parent)
+    let expression = binder.BindExpression(syntax.Root)
+    let variables = binder.scope.GetDeclaradVariables()
+    let mutable diagnostics = binder.Diagnostics.ToImmutableArray()
+    BoundGlobalScope(previous, diagnostics, variables, expression)
 
-    and bindNameExpression syntax : BoundExpression =
-      let variable = variables.FirstOrDefault(fun v -> v.Key.Name = syntax.Text).Key
-      if variable.Type = null then
-        diagnostics.ReportUndefinedVariable syntax
-        LiteralExpression 0
+  static member private CreateParentScope (previous: BoundGlobalScope option) =
+    let mutable previous = previous
+    let stack = new Stack<BoundGlobalScope>()
+    while previous <> None do
+      match previous with
+      | Some prev ->
+        stack.Push(prev)
+        previous <- prev.Previous
+      | None -> previous <- None
+
+    let mutable current = None
+
+    while stack.Count > 0 do
+      let globalScope = stack.Pop()
+      let scope = BoundScope(current)
+      for v in globalScope.Variables do
+        scope.TryDeclare(v) |> ignore
+      current <- Some scope
+
+    current
+
+  member b.BindExpression = function
+    | ExpressionSyntax.ParenthesysExpression (_,e,_) -> b.BindExpression (e)
+    | ExpressionSyntax.LiteralExpression l -> b.BindLiteralExpression (l)
+    | ExpressionSyntax.IdentifierExpression i -> b.BindNameExpression (i)
+    | ExpressionSyntax.AssignmentExpression (i, _, e) -> b.BindAssigmentExpression (i, e)
+    | ExpressionSyntax.UnaryExpression (o, e) -> b.BindUnaryExpression (o, e)
+    | ExpressionSyntax.BinaryExpression (l,o,r) -> b.BindBinaryExpression (l, o, r)
+    | ExpressionSyntax.ErrorExpression e -> b.BindErrorExpression (e)
+
+  member b.BindLiteralExpression syntax =
+    syntax.Value |> LiteralExpression
+
+  member b.BindNameExpression i =
+    let mutable variable = VariableSymbol()
+    if not (scope.TryLookup(i.Text, &variable)) then
+      b.Diagnostics.ReportUndefinedVariable i
+      ErrorExpression i.Text
+    else
+      VariableExpression variable
+
+  member b.BindAssigmentExpression (i, e) =
+    let boundExpr = b.BindExpression e
+    let mutable variable = VariableSymbol(i.Text, boundExpr.Type)
+    if not (scope.TryLookup(i.Text, &variable)) then
+      variable <- VariableSymbol(i.Text, boundExpr.Type)
+      scope.TryDeclare(variable) |> ignore
+    match boundExpr with
+    | ErrorExpression e ->
+      ErrorExpression e
+    | _ ->
+      if boundExpr.Type <> variable.Type then
+        diagnostics.ReportCannotConvert e.Span boundExpr.Type variable.Type
+        ErrorExpression i.Text
       else
-        VariableExpression variable
+        AssignmentExpression (variable, boundExpr)
 
-    and bindAssigmentExpression (i, e) : BoundExpression =
-      let boundExpr = bindExpression e
-
-      let existingVariable = variables.Keys.FirstOrDefault(fun v -> v.Name = i.Text)
-      if existingVariable.Type <> null then
-        variables.Remove(existingVariable) |> ignore
-      let variable = VariableSymbol(i.Text, boundExpr.Type)
-      variables.[variable] <- null
-
-      AssignmentExpression (variable, boundExpr)
-
-    and bindUnaryExpression (op, e) : BoundExpression =
-      let boundOperand = bindExpression e
+  member b.BindUnaryExpression (op, e) =
+    let boundOperand = b.BindExpression e
+    match boundOperand with
+    | ErrorExpression e ->
+      ErrorExpression e
+    | _ ->
       let boundOperator = UnaryOperator.Bind (op.Kind, boundOperand.Type)
       if boundOperator.IsNone then
         diagnostics.ReportUnaryNotDefined op boundOperand.Type
-        boundOperand
+        ErrorExpression op.Text
       else
         UnaryExpression (boundOperator.Value, boundOperand)
 
-    and bindBinaryExpression (l, o, r) : BoundExpression =
-      let boundLeft = bindExpression l
-      let boundRight = bindExpression r
+  member b.BindBinaryExpression (l, o, r) =
+    let boundLeft = b.BindExpression l
+    let boundRight = b.BindExpression r
+    match boundLeft, boundRight with
+    | (ErrorExpression e), _ | _, (ErrorExpression e) -> ErrorExpression e
+    | _ ->
       let boundOperator = BinaryOperator.Bind(o.Kind, boundLeft.Type, boundRight.Type)
       if boundOperator.IsNone then
         diagnostics.ReportBinaryNotDefined o boundLeft.Type boundRight.Type
-        boundLeft
+        ErrorExpression o.Text
       else
         BinaryExpression (boundLeft, boundOperator.Value, boundRight)
 
-    and bindErrorExpression e : BoundExpression =
-      ErrorExpression e.Text
-
-    bindExpression tree.Expression, diagnostics.Diagnostics, tree
+  member b.BindErrorExpression e =
+    ErrorExpression e.Text

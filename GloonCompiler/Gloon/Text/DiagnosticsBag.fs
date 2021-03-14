@@ -22,6 +22,16 @@ type DiagnosticsBag (tag: string, bag: IEnumerable<Diagnostic>) =
   member b.AddRange (bag: DiagnosticsBag) =
     bag.Diagnostics |> List.iter (fun diag -> b.Report diag.Span diag.Message)
 
+  member b.AddRange (diags: seq<Diagnostic>) =
+    diags |> Seq.iter (fun diag -> b.Report diag.Span diag.Message)
+
+  member b.Concat (bag: DiagnosticsBag) =
+    b.AddRange bag
+    b
+  member b.Concat (diags: seq<Diagnostic>) =
+    b.AddRange diags
+    b
+
   new (tag) = DiagnosticsBag(tag, [])
 
   member private _.Tag = tag
@@ -44,6 +54,12 @@ type DiagnosticsBag (tag: string, bag: IEnumerable<Diagnostic>) =
     b.Report (token.GetSpan()) $"Binary operator '{token.GetText()}' is not defined for types <{leftType}> and <{rightType}>"
 
   member b.ReportUndefinedVariable (token: IReportable) =
-    b.Report (token.GetSpan()) $"Identifier {token.GetText()} is not defined"
+    b.Report (token.GetSpan()) $"Variable {token.GetText()} is not defined"
+
+  member b.ReportVariableAlreadyDeclared span name =
+    b.Report span $"Variable {name} is already declared"
+
+  member b.ReportCannotConvert span fromType toType =
+    b.Report span $"Cannot convert type <{fromType}> to type <{toType}>"
 
   member _.Diagnostics : Diagnostic list = diagnostics |> Seq.toList

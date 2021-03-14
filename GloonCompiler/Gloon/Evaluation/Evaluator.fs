@@ -4,7 +4,7 @@ module internal Evaluator =
   open System
   open System.Collections.Generic
   open Gloon.Symbols
-  open Gloon.Binding.BoundTypes
+  open Gloon.Binding
 
   let rec internal Evaluate (node: BoundExpression) (variables: Dictionary<VariableSymbol, obj>) =
     let rec evaluate =
