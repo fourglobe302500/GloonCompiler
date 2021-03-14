@@ -3,17 +3,26 @@ namespace Gloon.Evaluation
 module internal Evaluator =
   open System
   open System.Collections.Generic
+
   open Gloon.Symbols
   open Gloon.Binding
 
-  let rec internal Evaluate (node: BoundExpression) (variables: Dictionary<VariableSymbol, obj>) =
-    let rec evaluate =
-      function
+  let rec internal Evaluate (node: BoundStatement) (variables: Dictionary<VariableSymbol, obj>) =
+    let rec EvaluateStatement = function
+      | ExpressionStatement e -> EvaluateExpression e
+      | BlockStatement statements ->
+        let mutable last = null
+        for statement in statements do
+          last <-EvaluateStatement statement
+        last
+
+    and EvaluateExpression e : obj =
+      match e with
       | LiteralExpression l -> l
-      | UnaryExpression (o, e) -> EvaluateUnaryExpression (o) (evaluate e)
-      | BinaryExpression (left,o,right) -> EvaluateBinaryExpression(evaluate left, o,evaluate right)
+      | UnaryExpression (o, e) -> EvaluateUnaryExpression (o) (EvaluateExpression e)
+      | BinaryExpression (left,o,right) -> EvaluateBinaryExpression(EvaluateExpression left, o,EvaluateExpression right)
       | VariableExpression i -> variables.GetValueOrDefault(i)
-      | AssignmentExpression (i, e) -> EvaluateAssigmentExpression (i, evaluate e)
+      | AssignmentExpression (i, e) -> EvaluateAssigmentExpression (i, EvaluateExpression e)
       | _ -> raise (Exception "GLOON::EVALUATION::EVALUATOR Invaliid Expression")
 
     and EvaluateUnaryExpression o = function
@@ -61,4 +70,4 @@ module internal Evaluator =
       variables.[i] <- e
       e
 
-    evaluate node
+    EvaluateStatement node

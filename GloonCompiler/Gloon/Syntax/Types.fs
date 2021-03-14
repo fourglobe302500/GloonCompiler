@@ -1,8 +1,10 @@
 ﻿namespace Gloon.Syntax
 
 open Gloon.Text
+
 open System
 open System.IO
+open System.Collections.Immutable
 
 type TokenKind =
   | NumberLiteralToken    of int
@@ -32,6 +34,8 @@ type TokenKind =
   | DoublePipeToken
   | OpenParenToken
   | CloseParenToken
+  | OpenCurlyBraceToken
+  | CloseCurlyBraceToken
 
 type Token =
   {
@@ -87,32 +91,61 @@ type ExpressionSyntax =
     | UnaryExpression        _ -> "Unary Expression"
     | ErrorExpression        _ -> "Error Expression"
 
-and CompilationUnit (root: ExpressionSyntax, endOfFileToken: Token) =
+and CompilationUnit (root: StatementSyntax, endOfFileToken: Token) =
   let root = root
   let endOfFileToken = endOfFileToken
 
   member _.Root = root
   member _.EndOfFileToken = endOfFileToken
   member _.Span = root.Span
-  member _.Children = [Expression root; Token endOfFileToken]
+  member _.Children = [Statement root; Token endOfFileToken]
+
+and StatementSyntax =
+  | BlockStatement of OpenCurlyBrace: Token * Statements: ImmutableArray<StatementSyntax> * CloseCurlyBrace: Token
+  | ExpressionStatement of  Expression: ExpressionSyntax
+
+  member s.Span =
+    match s with
+    | BlockStatement  (o,_,c) -> o.Span + c.Span
+    | ExpressionStatement   e -> e.Span
+
+  member s.Children =
+    match s with
+    | BlockStatement  (o,s,c) -> [
+      yield Token o
+      for statement in s do
+        yield Statement statement
+      yield Token c]
+    | ExpressionStatement   e -> [Expression e]
+
+  override s.ToString () =
+    match s with
+    | BlockStatement      _ -> "Block Statement"
+    | ExpressionStatement _ -> "Expression Statement"
 
 and SyntaxNode =
+  | Statement       of StatementSyntax
   | Expression      of ExpressionSyntax
   | Token           of Token
   | CompilationUnit of CompilationUnit
 
   member n.Span =
     match n with
+    | Statement s -> s.Span
     | Expression e -> e.Span
     | Token t -> t.Span
     | CompilationUnit t -> t.Span
 
-  member this.Children = this |> function
+  member n.Children =
+    match n with
+    | Statement       s -> s.Children
     | Expression      e -> e.Children
     | Token           _ -> []
     | CompilationUnit t -> t.Children
 
-  override this.ToString () = this |> function
+  override n.ToString () =
+    match n with
+    | Statement       s -> s.ToString ()
     | Expression      e -> e.ToString ()
     | Token           t -> t.ToString ()
     | CompilationUnit _ -> "Compilation Unit"
@@ -127,6 +160,7 @@ and SyntaxNode =
       Console.ForegroundColor <-
         match node with
         | Expression _ -> ConsoleColor.Cyan
+        | Statement _ -> ConsoleColor.DarkGreen
         | Token _ -> ConsoleColor.Blue
         | CompilationUnit _ -> ConsoleColor.Yellow
     writer.WriteLine(node)

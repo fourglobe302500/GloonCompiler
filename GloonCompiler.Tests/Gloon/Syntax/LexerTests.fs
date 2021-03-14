@@ -37,6 +37,8 @@ module Lexer =
       (TokenKind.DoublePipeToken, "||")
       (TokenKind.OpenParenToken, "(")
       (TokenKind.CloseParenToken, ")")
+      (TokenKind.OpenCurlyBraceToken, "{")
+      (TokenKind.CloseCurlyBraceToken, "}")
     ]
 
   let private GetWhiteSpaceTokens () = [

@@ -7,6 +7,8 @@ module internal Parser =
   open Gloon.Syntax.Facts
   open Gloon.Syntax.Lexer
 
+  open System.Collections.Immutable
+
   let Parse text =
     let (tokens_, diagnostics_) = Lex text
     let tokens = tokens_ |> Seq.filter (fun t ->
@@ -64,8 +66,21 @@ module internal Parser =
 
     and parseExpression () = parseBinaryExpression 0
 
-    parseExpression (), matchToken(EndOfFileToken), diagnostics
+    let rec parseBlockStatement () =
+      let builder = ImmutableArray.CreateBuilder()
+      let openBrace = matchToken OpenCurlyBraceToken
+      while currentKind () <> CloseCurlyBraceToken && currentKind () <> EndOfFileToken do
+        builder.Add(parseStatement ())
+      let closeBrace = matchToken CloseCurlyBraceToken
+      BlockStatement (openBrace, builder.ToImmutable(), closeBrace)
 
-  let ParseCompilationUnit text =
-    let (root, endOfFileToken, diagnostics) = Parse text
-    (new CompilationUnit(root, endOfFileToken), diagnostics)
+    and parseStatement () =
+      match currentKind () with
+      | OpenCurlyBraceToken -> parseBlockStatement ()
+      | _ -> ExpressionStatement (parseExpression ())
+
+    parseStatement (), matchToken(EndOfFileToken), diagnostics
+
+  let parseCompilationUnit text =
+    let (statement, endOfFileToken, diagnostics) = Parse text
+    (new CompilationUnit(statement, endOfFileToken), diagnostics)

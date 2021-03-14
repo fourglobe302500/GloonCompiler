@@ -1,11 +1,10 @@
 ﻿namespace Gloon.Binding
 
-open System.Linq
 open System.Collections.Generic
 open System.Collections.Immutable
 
-open Gloon.Symbols
 open Gloon.Text
+open Gloon.Symbols
 open Gloon.Syntax
 open Gloon.Binding
 
@@ -19,7 +18,7 @@ type internal Binder (parent: BoundScope option) =
   static member BindGlobalScope previous (syntax: CompilationUnit) =
     let parent = Binder.CreateParentScope(previous)
     let binder = Binder(parent)
-    let expression = binder.BindExpression(syntax.Root)
+    let expression = binder.BindStatement(syntax.Root)
     let variables = binder.scope.GetDeclaradVariables()
     let mutable diagnostics = binder.Diagnostics.ToImmutableArray()
     BoundGlobalScope(previous, diagnostics, variables, expression)
@@ -45,7 +44,19 @@ type internal Binder (parent: BoundScope option) =
 
     current
 
-  member b.BindExpression = function
+  member private b.BindStatement = function
+    | StatementSyntax.ExpressionStatement e -> b.BindExpressionStatement e
+    | StatementSyntax.BlockStatement (_, statements, _) -> b.BindBlockStatement statements
+
+  member private b.BindExpressionStatement e = ExpressionStatement (b.BindExpression e)
+
+  member private b.BindBlockStatement statements =
+    let builder = ImmutableArray.CreateBuilder()
+    for statement in statements do
+      builder.Add(b.BindStatement statement)
+    BlockStatement (builder.ToImmutable())
+
+  member private b.BindExpression = function
     | ExpressionSyntax.ParenthesysExpression (_,e,_) -> b.BindExpression (e)
     | ExpressionSyntax.LiteralExpression l -> b.BindLiteralExpression (l)
     | ExpressionSyntax.IdentifierExpression i -> b.BindNameExpression (i)
@@ -54,10 +65,10 @@ type internal Binder (parent: BoundScope option) =
     | ExpressionSyntax.BinaryExpression (l,o,r) -> b.BindBinaryExpression (l, o, r)
     | ExpressionSyntax.ErrorExpression e -> b.BindErrorExpression (e)
 
-  member b.BindLiteralExpression syntax =
+  member private b.BindLiteralExpression syntax =
     syntax.Value |> LiteralExpression
 
-  member b.BindNameExpression i =
+  member private b.BindNameExpression i =
     let mutable variable = VariableSymbol()
     if not (scope.TryLookup(i.Text, &variable)) then
       b.Diagnostics.ReportUndefinedVariable i
@@ -65,7 +76,7 @@ type internal Binder (parent: BoundScope option) =
     else
       VariableExpression variable
 
-  member b.BindAssigmentExpression (i, e) =
+  member private b.BindAssigmentExpression (i, e) =
     let boundExpr = b.BindExpression e
     let mutable variable = VariableSymbol(i.Text, boundExpr.Type)
     if not (scope.TryLookup(i.Text, &variable)) then
@@ -81,7 +92,7 @@ type internal Binder (parent: BoundScope option) =
       else
         AssignmentExpression (variable, boundExpr)
 
-  member b.BindUnaryExpression (op, e) =
+  member private b.BindUnaryExpression (op, e) =
     let boundOperand = b.BindExpression e
     match boundOperand with
     | ErrorExpression e ->
@@ -94,7 +105,7 @@ type internal Binder (parent: BoundScope option) =
       else
         UnaryExpression (boundOperator.Value, boundOperand)
 
-  member b.BindBinaryExpression (l, o, r) =
+  member private b.BindBinaryExpression (l, o, r) =
     let boundLeft = b.BindExpression l
     let boundRight = b.BindExpression r
     match boundLeft, boundRight with
@@ -107,5 +118,5 @@ type internal Binder (parent: BoundScope option) =
       else
         BinaryExpression (boundLeft, boundOperator.Value, boundRight)
 
-  member b.BindErrorExpression e =
+  member private b.BindErrorExpression e =
     ErrorExpression e.Text

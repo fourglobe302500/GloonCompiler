@@ -37,8 +37,8 @@ type Compilation private (previous: Compilation option, tree: SyntaxTree) =
     Compilation(Some t, syntaxTree)
 
   member c.Evaluate (variables: Dictionary<VariableSymbol, obj>) =
-    let expression = c.GlobalScope.Expression
+    let statement = c.GlobalScope.Statement
     let diagnostics = c.GlobalScope.Diagnostics.Concat(tree.Diagnostics).ToImmutableArray()
     if diagnostics.Length > 0
     then {Diagnostics = diagnostics; Value = null}
-    else {Diagnostics = ImmutableArray.Empty; Value = Evaluate expression variables}
+    else {Diagnostics = ImmutableArray.Empty; Value = Evaluate statement variables}

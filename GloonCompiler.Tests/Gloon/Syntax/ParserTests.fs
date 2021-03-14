@@ -27,7 +27,13 @@ module Parser =
     let cExpression = IdentifierExpression cToken
     if op1Precendece >= op2Precendece then
       let expr = BinaryExpression (BinaryExpression(aExpression, op1Token, bExpression), op2Token, cExpression)
-      Assert.Equal(expr, syntaxTree.Expression)
+      match syntaxTree.Statement with
+      | ExpressionStatement e ->
+        Assert.Equal(expr, e)
+      | _ -> Assert.True(false)
     else
       let expr = BinaryExpression (aExpression, op1Token, BinaryExpression(bExpression, op2Token, cExpression))
-      Assert.Equal(expr, syntaxTree.Expression)
+      match syntaxTree.Statement with
+      | ExpressionStatement e ->
+        Assert.Equal(expr, e)
+      | _ -> Assert.True(false)

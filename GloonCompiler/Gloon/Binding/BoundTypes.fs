@@ -12,8 +12,6 @@ type internal UnaryOperatorKind =
   | Identity
   | Negation
 
-  member _.Children = []
-
 [<Sealed>]
 type internal UnaryOperator private (token: TokenKind, kind: UnaryOperatorKind, operandType: Type, returnType: Type) =
   let token = token
@@ -54,8 +52,6 @@ type internal BinaryOperatorKind =
   | LesserThanOrEquals
   | LogicalAnd
   | LogicalOr
-
-  member _.Children = []
 
 [<Sealed>]
 type internal BinaryOperator private (token: TokenKind, kind: BinaryOperatorKind, leftType: Type, rightType: Type, returnType: Type) =
@@ -115,32 +111,13 @@ type internal BoundExpression =
     | BinaryExpression (_,op,_) -> op.Type
     | ErrorExpression _ -> null
 
-  member e.Children = e |> function
-    | UnaryExpression (op, e) -> [BoundNode.UnaryOperator op; Expression e]
-    | BinaryExpression (l, o, r) -> [Expression l; BoundNode.BinaryOperator o; Expression r]
-    | _ -> []
+type internal BoundStatement =
+  | ExpressionStatement of BoundExpression
+  | BlockStatement of ImmutableArray<BoundStatement>
 
-  override e.ToString () = e |> function
-    | LiteralExpression l -> $"Literal Expression '{l}'"
-    | VariableExpression v -> $"Variable Expression '{v.Name}'"
-    | AssignmentExpression (i, _) -> $"Assigment Expression '{i}'"
-    | UnaryExpression _ -> "Unary Expression"
-    | BinaryExpression _ -> "Binary Expression"
-    | ErrorExpression e -> $"Error Expression '{e}'"
-
-and internal BoundNode =
+type internal BoundNode =
+  | Statement of BoundStatement
   | Expression of BoundExpression
-  | UnaryOperator of UnaryOperator
-  | BinaryOperator of BinaryOperator
-
-  member n.Children = n |> function
-    | Expression e -> e.Children
-    | _ -> []
-
-  override n.ToString () = n |> function
-    | Expression _ -> "Bound Expression"
-    | UnaryOperator u -> $"Unary Operator {u}"
-    | BinaryOperator b -> $"Binary Operator {b}"
 
 [<Sealed>]
 type internal BoundScope (parent: BoundScope option) =
@@ -164,8 +141,8 @@ type internal BoundScope (parent: BoundScope option) =
   member _.GetDeclaradVariables () = variables.Values.ToImmutableArray()
 
 [<Sealed>]
-type internal BoundGlobalScope (previous: BoundGlobalScope option, diagnostics: ImmutableArray<Diagnostic>, variables: ImmutableArray<VariableSymbol>, expression: BoundExpression) =
+type internal BoundGlobalScope (previous: BoundGlobalScope option, diagnostics: ImmutableArray<Diagnostic>, variables: ImmutableArray<VariableSymbol>, statement: BoundStatement) =
   member _.Previous = previous
   member _.Diagnostics = diagnostics
   member _.Variables = variables
-  member _.Expression = expression
+  member _.Statement = statement

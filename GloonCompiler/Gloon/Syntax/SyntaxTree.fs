@@ -11,13 +11,13 @@ type SyntaxTree private (text: SourceText, root: CompilationUnit, diagnostics: D
   let diagnostics = diagnostics
 
   private new (text) =
-    let (root, diagnostics) = ParseCompilationUnit(text)
+    let (root, diagnostics) = parseCompilationUnit(text)
     SyntaxTree(text, root, diagnostics)
 
   member _.Text = text
   member _.Root = root
   member _.RootNode = CompilationUnit root
-  member _.Expression = root.Root
+  member _.Statement = root.Root
   member _.Diagnostics = diagnostics.Diagnostics.ToImmutableArray()
 
   static member Parse text = SyntaxTree(text)

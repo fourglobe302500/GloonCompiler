@@ -56,6 +56,8 @@ module Facts =
       | DoublePipeToken -> "||"
       | OpenParenToken -> "("
       | CloseParenToken -> ")"
+      | OpenCurlyBraceToken -> "{"
+      | CloseCurlyBraceToken -> "}"
 
     static member GetAll () = seq {
       NumberLiteralToken 0
@@ -85,6 +87,8 @@ module Facts =
       DoublePipeToken
       OpenParenToken
       CloseParenToken
+      OpenCurlyBraceToken
+      CloseCurlyBraceToken
     }
 
     static member GetBinaryOperators () =
