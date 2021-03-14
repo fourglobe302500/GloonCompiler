@@ -23,4 +23,4 @@ jobs:
     - name: Build with dotnet
       run: dotnet build GloonCompiler/GloonCompiler.fsproj --configuration Release
     - name: Test with dotnet
-      run: dotnet test GloonCompiler/GloonCompiler.fsproj -v n
+      run:  dotnet test GloonCompiler.Tests/GloonCompiler.Tests.fsproj -v n
