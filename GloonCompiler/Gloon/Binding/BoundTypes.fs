@@ -101,7 +101,7 @@ type internal BoundExpression =
   | AssignmentExpression of Identifier: VariableSymbol * Expr: BoundExpression
   | UnaryExpression of operator: UnaryOperator * operand: BoundExpression
   | BinaryExpression of left: BoundExpression * operator: BinaryOperator * right: BoundExpression
-  | ErrorExpression of error: string
+  | ErrorExpression of error: Token
 
   member e.Type = e |> function
     | LiteralExpression l -> l.GetType()

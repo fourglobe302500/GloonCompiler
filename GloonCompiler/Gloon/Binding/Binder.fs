@@ -52,8 +52,10 @@ type internal Binder (parent: BoundScope option) =
 
   member private b.BindBlockStatement statements =
     let builder = ImmutableArray.CreateBuilder()
+    let binder = Binder(Some b.scope)
     for statement in statements do
-      builder.Add(b.BindStatement statement)
+      builder.Add(binder.BindStatement statement)
+    diagnostics.AddRange(binder.Diagnostics)
     BlockStatement (builder.ToImmutable())
 
   member private b.BindExpression = function
@@ -72,7 +74,7 @@ type internal Binder (parent: BoundScope option) =
     let mutable variable = VariableSymbol()
     if not (scope.TryLookup(i.Text, &variable)) then
       b.Diagnostics.ReportUndefinedVariable i
-      ErrorExpression i.Text
+      ErrorExpression i
     else
       VariableExpression variable
 
@@ -103,7 +105,7 @@ type internal Binder (parent: BoundScope option) =
       let boundOperator = UnaryOperator.Bind (op.Kind, boundOperand.Type)
       if boundOperator.IsNone then
         diagnostics.ReportUnaryNotDefined op boundOperand.Type
-        ErrorExpression op.Text
+        ErrorExpression op
       else
         UnaryExpression (boundOperator.Value, boundOperand)
 
@@ -116,9 +118,9 @@ type internal Binder (parent: BoundScope option) =
       let boundOperator = BinaryOperator.Bind(o.Kind, boundLeft.Type, boundRight.Type)
       if boundOperator.IsNone then
         diagnostics.ReportBinaryNotDefined o boundLeft.Type boundRight.Type
-        ErrorExpression o.Text
+        ErrorExpression o
       else
         BinaryExpression (boundLeft, boundOperator.Value, boundRight)
 
   member private b.BindErrorExpression e =
-    ErrorExpression e.Text
+    ErrorExpression e
