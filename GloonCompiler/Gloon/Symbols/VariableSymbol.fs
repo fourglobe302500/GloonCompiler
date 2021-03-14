@@ -6,4 +6,5 @@ open System
 type VariableSymbol =
   val Name: string
   val Type: Type
-  internal new (name, type_) = {Name = name; Type = type_}
+  val IsReadOnly: bool
+  internal new (name, type_, isReadOnly) = {Name = name; Type = type_; IsReadOnly = isReadOnly}

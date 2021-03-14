@@ -12,6 +12,10 @@ type TokenKind =
   | Identifier            of string
   | WhiteSpaceToken       of string
   | InvallidToken         of string
+
+  | LetKeyword
+  | DefKeyword
+
   | EndOfFileToken
   | IncrementToken
   | PlusToken
@@ -102,26 +106,30 @@ and CompilationUnit (root: StatementSyntax, endOfFileToken: Token) =
 
 and StatementSyntax =
   | BlockStatement of OpenCurlyBrace: Token * Statements: ImmutableArray<StatementSyntax> * CloseCurlyBrace: Token
-  | ExpressionStatement of  Expression: ExpressionSyntax
+  | ExpressionStatement of Expression: ExpressionSyntax
+  | DeclarationStatement of DeclareToken: Token * Identifier: Token * Equals: Token * Statement: StatementSyntax
 
   member s.Span =
     match s with
-    | BlockStatement  (o,_,c) -> o.Span + c.Span
-    | ExpressionStatement   e -> e.Span
+    | BlockStatement          (o,_,c) -> o.Span + c.Span
+    | ExpressionStatement           e -> e.Span
+    | DeclarationStatement  (d,_,_,s) -> d.Span + s.Span
 
   member s.Children =
     match s with
-    | BlockStatement  (o,s,c) -> [
+    | BlockStatement          (o,s,c) -> [
       yield Token o
       for statement in s do
         yield Statement statement
       yield Token c]
-    | ExpressionStatement   e -> [Expression e]
+    | ExpressionStatement           e -> [Expression e]
+    | DeclarationStatement  (d,i,e,s) -> [Token d; Token i; Token e; Statement s]
 
   override s.ToString () =
     match s with
-    | BlockStatement      _ -> "Block Statement"
-    | ExpressionStatement _ -> "Expression Statement"
+    | BlockStatement        _ -> "Block Statement"
+    | ExpressionStatement   _ -> "Expression Statement"
+    | DeclarationStatement  _ -> "Declaration Statement"
 
 and SyntaxNode =
   | Statement       of StatementSyntax

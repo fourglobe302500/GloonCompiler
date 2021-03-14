@@ -32,6 +32,8 @@ module internal Lexer =
     let getKeywordKind = function
     | "true" -> BooleanLiteralToken true
     | "false" -> BooleanLiteralToken false
+    | "let" -> LetKeyword
+    | "def" -> DefKeyword
     | a -> Identifier a
 
     let getKeywordValue str : obj = str |> function

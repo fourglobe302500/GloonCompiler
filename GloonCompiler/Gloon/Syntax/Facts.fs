@@ -34,6 +34,10 @@ module Facts =
       | Identifier i -> i
       | WhiteSpaceToken w -> w
       | InvallidToken i -> i
+
+      | LetKeyword -> "let"
+      | DefKeyword -> "def"
+
       | EndOfFileToken -> "\000"
       | IncrementToken -> "++"
       | PlusToken -> "+"

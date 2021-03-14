@@ -15,6 +15,10 @@ module internal Evaluator =
         for statement in statements do
           last <-EvaluateStatement statement
         last
+      | DeclarationStatement (v, i) ->
+        let value = EvaluateStatement i
+        variables.[v] <- value
+        value
 
     and EvaluateExpression e : obj =
       match e with

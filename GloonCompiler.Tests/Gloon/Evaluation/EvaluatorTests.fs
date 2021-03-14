@@ -59,7 +59,7 @@ module EvaluatorTests =
   [<InlineData("true  != true" , false)>]
 
   [<InlineData("(1 * 5 - 6) > 2 || 1 == 2", false)>]
-  [<InlineData("(a = 4) * 0 + a ** a", 256)>]
+  [<InlineData("{let a = 4  a ** a}", 256)>]
 
   let ``Evaluator Evaluates`` (expression: string, expectedValue) =
     let tree = SyntaxTree.Parse expression

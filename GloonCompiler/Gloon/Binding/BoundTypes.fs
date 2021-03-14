@@ -112,8 +112,14 @@ type internal BoundExpression =
     | ErrorExpression _ -> null
 
 type internal BoundStatement =
-  | ExpressionStatement of BoundExpression
-  | BlockStatement of ImmutableArray<BoundStatement>
+  | ExpressionStatement of Expression: BoundExpression
+  | BlockStatement of Statements: ImmutableArray<BoundStatement>
+  | DeclarationStatement of Variable: VariableSymbol * Initializer: BoundStatement
+
+  member e.Type = e |> function
+    | ExpressionStatement         e -> e.Type
+    | BlockStatement              b -> b.[b.Length - 1].Type
+    | DeclarationStatement    (_,i) -> i.Type
 
 type internal BoundNode =
   | Statement of BoundStatement

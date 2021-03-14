@@ -2,6 +2,7 @@
 
 open System.Collections.Generic
 open System.Collections
+open Gloon.Symbols
 
 [<Interface>]
 type IReportable =
@@ -56,10 +57,16 @@ type DiagnosticsBag (tag: string, bag: IEnumerable<Diagnostic>) =
   member b.ReportUndefinedVariable (token: IReportable) =
     b.Report (token.GetSpan()) $"Variable {token.GetText()} is not defined"
 
-  member b.ReportVariableAlreadyDeclared span name =
-    b.Report span $"Variable {name} is already declared"
+  member b.ReportVariableAlreadyDeclared (token: IReportable) =
+    b.Report (token.GetSpan()) $"Variable {token.GetText()} is already declared"
 
   member b.ReportCannotConvert span fromType toType =
     b.Report span $"Cannot convert type <{fromType}> to type <{toType}>"
+
+  member b.ReportNestedDeclaration span variable =
+    b.Report span $"Cannot declare '{variable}' because value is a declaration statement"
+
+  member b.ReportVariableIsReadOnly (token: IReportable) (variable: VariableSymbol) =
+    b.Report (token.GetSpan()) $"Variable '{variable.Name}' is read only and cannot be changed"
 
   member _.Diagnostics : Diagnostic list = diagnostics |> Seq.toList

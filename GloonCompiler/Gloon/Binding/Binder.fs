@@ -47,6 +47,7 @@ type internal Binder (parent: BoundScope option) =
   member private b.BindStatement = function
     | StatementSyntax.ExpressionStatement e -> b.BindExpressionStatement e
     | StatementSyntax.BlockStatement (_, statements, _) -> b.BindBlockStatement statements
+    | StatementSyntax.DeclarationStatement (k,i,_,s) -> b.BindDeclarationStatement k i s
 
   member private b.BindExpressionStatement e = ExpressionStatement (b.BindExpression e)
 
@@ -58,11 +59,28 @@ type internal Binder (parent: BoundScope option) =
     diagnostics.AddRange(binder.Diagnostics)
     BlockStatement (builder.ToImmutable())
 
+  member private b.BindDeclarationStatement k i s =
+    let initializer = b.BindStatement s
+    match initializer with
+    | DeclarationStatement _ ->
+      diagnostics.ReportNestedDeclaration s.Span i.Text
+      ExpressionStatement (ErrorExpression i)
+    | initializer ->
+      let isReadOnly = k.Kind = DefKeyword
+      let variable = VariableSymbol(i.Text, initializer.Type, isReadOnly)
+      if variable.Type = null then
+        ExpressionStatement (ErrorExpression i)
+      elif not (scope.TryDeclare(variable)) then
+        diagnostics.ReportVariableAlreadyDeclared i
+        ExpressionStatement (ErrorExpression i)
+      else
+        DeclarationStatement (variable, initializer)
+
   member private b.BindExpression = function
     | ExpressionSyntax.ParenthesysExpression (_,e,_) -> b.BindExpression (e)
     | ExpressionSyntax.LiteralExpression l -> b.BindLiteralExpression (l)
     | ExpressionSyntax.IdentifierExpression i -> b.BindNameExpression (i)
-    | ExpressionSyntax.AssignmentExpression (i, _, e) -> b.BindAssigmentExpression (i, e)
+    | ExpressionSyntax.AssignmentExpression (i, equal, e) -> b.BindAssigmentExpression (i, equal, e)
     | ExpressionSyntax.UnaryExpression (o, e) -> b.BindUnaryExpression (o, e)
     | ExpressionSyntax.BinaryExpression (l,o,r) -> b.BindBinaryExpression (l, o, r)
     | ExpressionSyntax.ErrorExpression e -> b.BindErrorExpression (e)
@@ -78,23 +96,27 @@ type internal Binder (parent: BoundScope option) =
     else
       VariableExpression variable
 
-  member private b.BindAssigmentExpression (i, e) =
+  member private b.BindAssigmentExpression (i, equal, e) =
     let boundExpr = b.BindExpression e
-    let mutable variable = VariableSymbol(i.Text, boundExpr.Type)
+    let mutable variable = VariableSymbol(i.Text, boundExpr.Type, false)
     if not (scope.TryLookup(i.Text, &variable)) then
-      variable <- VariableSymbol(i.Text, boundExpr.Type)
-      scope.TryDeclare(variable) |> ignore
-    match boundExpr with
-    | ErrorExpression e ->
-      ErrorExpression e
-    | _ ->
-      if variable.Type = null then
-        ErrorExpression i.Text
-      elif boundExpr.Type <> variable.Type then
-        diagnostics.ReportCannotConvert e.Span boundExpr.Type variable.Type
-        ErrorExpression i.Text
-      else
-        AssignmentExpression (variable, boundExpr)
+      diagnostics.ReportUndefinedVariable i
+      ErrorExpression i
+    else
+      match boundExpr with
+      | ErrorExpression e ->
+        ErrorExpression e
+      | _ ->
+        if variable.Type = null then
+          ErrorExpression i
+        elif variable.IsReadOnly then
+          diagnostics.ReportVariableIsReadOnly equal variable
+          ErrorExpression equal
+        elif boundExpr.Type <> variable.Type then
+          diagnostics.ReportCannotConvert e.Span boundExpr.Type variable.Type
+          ErrorExpression i
+        else
+          AssignmentExpression (variable, boundExpr)
 
   member private b.BindUnaryExpression (op, e) =
     let boundOperand = b.BindExpression e
