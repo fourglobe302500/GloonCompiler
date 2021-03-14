@@ -10,8 +10,8 @@ module internal Binder =
   open Gloon.Syntax
   open Gloon.Binding.BoundTypes
 
-  let internal bind (cst: CST) (variables: Dictionary<VariableSymbol, obj>) =
-    let diagnostics = DiagnosticsBag ("GLOON::BINDING::BINDER", cst.Diagnostics)
+  let internal bind (tree: SyntaxTree) (variables: Dictionary<VariableSymbol, obj>) =
+    let diagnostics = DiagnosticsBag ("GLOON::BINDING::BINDER", tree.Diagnostics)
 
     let rec bindExpression = function
     | ExpressionSyntax.ParenthesysExpression (_,e,_) -> bindExpression (e)
@@ -66,4 +66,4 @@ module internal Binder =
     and bindErrorExpression e : BoundExpression =
       ErrorExpression e.Text
 
-    bindExpression cst.Root, diagnostics.Diagnostics, cst
+    bindExpression tree.Expression, diagnostics.Diagnostics, tree

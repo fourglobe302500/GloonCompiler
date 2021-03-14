@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Gloon;
 using Gloon.Symbols;
 using Gloon.Syntax;
+
 using Gloon.Compiler;
 using System.Text;
 
@@ -58,11 +59,11 @@ namespace GloonREPL
         {
           textBuilder.AppendLine(input);
           var text = textBuilder.ToString();
-          var syntaxTree = Parsing.ParseString(text);
+          var syntaxTree = SyntaxTree.Parse(text);
           if (!isBlank && syntaxTree.Diagnostics.Any())
             continue;
           var compilation = new Compilation(syntaxTree);
-          if (CST) SyntaxNode.NewCST(syntaxTree).WriteTo(Console.Out);
+          if (CST) syntaxTree.RootNode.WriteTo(Console.Out);
           var result = compilation.Evaluate(variables);
           if (result.Diagnostics.Any())
           {

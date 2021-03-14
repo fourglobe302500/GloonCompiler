@@ -3,6 +3,7 @@
 open Gloon.Text
 open System
 open System.IO
+open System.Collections.Immutable
 
 type TokenKind =
   | NumberLiteralToken    of int
@@ -116,26 +117,35 @@ type ExpressionSyntax =
   interface IComparable<ExpressionSyntax> with
     member this.CompareTo(other: ExpressionSyntax): int = 0
 
+and CompilationUnit (root: ExpressionSyntax, endOfFileToken: Token) =
+  let root = root
+  let endOfFileToken = endOfFileToken
+
+  member _.Root = root
+  member _.EndOfFileToken = endOfFileToken
+  member _.Span = root.Span
+  member _.Children = [Expression root; Token endOfFileToken]
+
 and SyntaxNode =
-  | Expression    of ExpressionSyntax
-  | Token         of Token
-  | CST           of CST
+  | Expression      of ExpressionSyntax
+  | Token           of Token
+  | CompilationUnit of CompilationUnit
 
   member n.Span =
     match n with
     | Expression e -> e.Span
     | Token t -> t.Span
-    | CST t -> t.Span
+    | CompilationUnit t -> t.Span
 
   member this.Children = this |> function
-    | Expression   e -> e.Children
-    | Token        _ -> []
-    | CST          t -> t.Children
+    | Expression      e -> e.Children
+    | Token           _ -> []
+    | CompilationUnit t -> t.Children
 
   override this.ToString () = this |> function
-    | Expression   e -> e.ToString ()
-    | Token        t -> t.ToString ()
-    | CST          _ -> "Concrete Syntax Tree"
+    | Expression      e -> e.ToString ()
+    | Token           t -> t.ToString ()
+    | CompilationUnit _ -> "Compilation Unit"
 
   member t.Match o =
     match t, o with
@@ -153,23 +163,8 @@ and SyntaxNode =
         match node with
         | Expression _ -> ConsoleColor.Cyan
         | Token _ -> ConsoleColor.Blue
-        | CST _ -> ConsoleColor.Yellow
+        | CompilationUnit _ -> ConsoleColor.Yellow
     writer.WriteLine(node)
     let lastNode = node.Children |> List.tryLast
     node.Children |>
     List.iter (fun n -> n.PrettyPrint(writer, indent + (if not last then "│   " else if first then "" else "    "), false, n.Match(lastNode.Value)))
-
-and CST (text: SourceText, root: ExpressionSyntax, endOfFileToken: Token, diagnostics: DiagnosticsBag) =
-  let text = text
-  let root = root
-  let endOfFileToken = endOfFileToken
-  let diagnostics = diagnostics
-
-  member _.Text = text
-  member _.Root = root
-  member _.Span = root.Span
-  member _.EndOfFileToken = endOfFileToken
-  member _.Diagnostics = diagnostics.Diagnostics
-  member _.Children = [Expression root; Token endOfFileToken]
-  member this.ToExpression () =
-      SyntaxNode.CST this

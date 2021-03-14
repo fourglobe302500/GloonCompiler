@@ -15,7 +15,7 @@ type EvaluationResult =
   }
 
 [<Sealed>]
-type Compilation (tree: CST) =
+type Compilation (tree: SyntaxTree) =
   let tree = tree
   member _.Tree = tree
   member c.Evaluate (variables: Dictionary<VariableSymbol, obj>) =

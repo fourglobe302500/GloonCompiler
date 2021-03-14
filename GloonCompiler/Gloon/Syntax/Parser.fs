@@ -64,4 +64,8 @@ module internal Parser =
 
     and parseExpression () = parseBinaryExpression 0
 
-    CST (text, parseExpression (), matchToken(EndOfFileToken), diagnostics)
+    parseExpression (), matchToken(EndOfFileToken), diagnostics
+
+  let ParseCompilationUnit text =
+    let (root, endOfFileToken, diagnostics) = Parse text
+    (new CompilationUnit(root, endOfFileToken), diagnostics)

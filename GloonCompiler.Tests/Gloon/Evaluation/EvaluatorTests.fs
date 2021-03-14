@@ -2,7 +2,7 @@
 
 module EvaluatorTests =
   open Gloon.Symbols
-  open Gloon.Syntax.Parsing
+  open Gloon.Syntax
   open Gloon.Compiler
 
   open Xunit
@@ -61,8 +61,8 @@ module EvaluatorTests =
   [<InlineData("(1 * 5 - 6) > 2 || 1 == 2", false)>]
   [<InlineData("(a = 4) * 0 + a ** a", 256)>]
 
-  let ``Evaluator Evaluates`` (expression, expectedValue) =
-    let tree = ParseString expression
+  let ``Evaluator Evaluates`` (expression: string, expectedValue) =
+    let tree = SyntaxTree.Parse expression
     let compilation = Compilation tree
     let variables = new Dictionary<VariableSymbol, obj>()
     let result = compilation.Evaluate(variables)
