@@ -21,6 +21,6 @@ jobs:
     - name: Restore
       run: git submodule update --init --recursive
     - name: Build with dotnet
-      run: dotnet build GloonCompiler/GloonCompiler.fsproj --configuration Release
+      run: dotnet build GloonCompiler/GloonCompiler.fsproj --configuration Release --nologo
     - name: Test with dotnet
-      run: dotnet test GloonCompiler/GloonCompiler.fsproj -v n
+      run:  dotnet test GloonCompiler.Tests/GloonCompiler.Tests.fsproj -v m --nologo

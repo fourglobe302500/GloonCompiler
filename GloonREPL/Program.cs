@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -6,7 +7,6 @@ using Gloon;
 using Gloon.Symbols;
 using Gloon.Syntax;
 using Gloon.Compiler;
-using System.Text;
 
 namespace GloonREPL
 {
@@ -17,10 +17,11 @@ namespace GloonREPL
       var CST = false;
       var variables = new Dictionary<VariableSymbol, object>();
       var textBuilder = new StringBuilder();
+      Compilation previous = null;
 
       while (true)
       {
-        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.ForegroundColor = ConsoleColor.Green;
         Console.Write(textBuilder.Length == 0 ? "» " : "· ");
         Console.ForegroundColor = ConsoleColor.White;
         var input = Console.ReadLine();
@@ -43,8 +44,10 @@ namespace GloonREPL
               break;
             case "#clm":
               variables.Clear();
+              previous = null;
               Console.WriteLine($"Memory clear");
               break;
+            case "#vm":
             case "#viewmemory":
               foreach (var key in variables.Keys)
                 Console.WriteLine($"  {key.Name}: {variables[key]}");
@@ -58,11 +61,14 @@ namespace GloonREPL
         {
           textBuilder.AppendLine(input);
           var text = textBuilder.ToString();
-          var syntaxTree = Parsing.ParseString(text);
+          var syntaxTree = SyntaxTree.Parse(text);
           if (!isBlank && syntaxTree.Diagnostics.Any())
             continue;
-          var compilation = new Compilation(syntaxTree);
-          if (CST) SyntaxNode.NewCST(syntaxTree).WriteTo(Console.Out);
+          var compilation =
+            previous == null
+            ? new Compilation(syntaxTree)
+            : previous.ContinueWith(syntaxTree);
+          if (CST) syntaxTree.RootNode.WriteTo(Console.Out);
           var result = compilation.Evaluate(variables);
           if (result.Diagnostics.Any())
           {
@@ -76,7 +82,7 @@ namespace GloonREPL
               Console.ForegroundColor = ConsoleColor.Red;
               Console.WriteLine($"({ lineNumber}, { character}): " + diag);
               Console.ForegroundColor = ConsoleColor.DarkGray;
-              Console.Write(" line -> " + text[line.Start..diag.Span.Start]);
+              Console.Write(" line -> " + text[line.Start..diag.Span.Start].TrimStart());
               Console.ForegroundColor = ConsoleColor.Red;
               Console.Write(text[diag.Span.Start..diag.Span.End]);
               Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -86,8 +92,9 @@ namespace GloonREPL
           }
           else
           {
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.ForegroundColor = ConsoleColor.Magenta;
             Console.WriteLine(result.Value);
+            previous = compilation;
           }
           textBuilder.Clear();
         }

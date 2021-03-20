@@ -7,6 +7,8 @@ module internal Parser =
   open Gloon.Syntax.Facts
   open Gloon.Syntax.Lexer
 
+  open System.Collections.Immutable
+
   let Parse text =
     let (tokens_, diagnostics_) = Lex text
     let tokens = tokens_ |> Seq.filter (fun t ->
@@ -32,7 +34,8 @@ module internal Parser =
     let matchToken = function
     | k when k = currentKind() -> next()
     | kind ->
-      diagnostics.ReportUnexpectedKind "Token" (current()) kind
+      if currentKind () <> InvallidToken (current().Text) then
+        diagnostics.ReportUnexpectedKind "Token" (current()) kind
       {next () with Text = ""; Kind = kind; Value = null}
 
     let rec parsePrimaryExpression () =
@@ -44,7 +47,8 @@ module internal Parser =
         AssignmentExpression (matchToken (TokenKind.Identifier i), matchToken TokenKind.EqualsToken, parseExpression())
       | Identifier i -> IdentifierExpression (matchToken (Identifier i))
       | _ ->
-        diagnostics.ReportInvallidKind "token" (current ())
+        if currentKind () <> InvallidToken (current().Text) then
+          diagnostics.ReportInvallidKind "token" (current ())
         ErrorExpression (next())
 
     and parseUnaryPrefixExpression () =
@@ -64,4 +68,32 @@ module internal Parser =
 
     and parseExpression () = parseBinaryExpression 0
 
-    CST (text, parseExpression (), matchToken(EndOfFileToken), diagnostics)
+    let rec parseBlockStatement () =
+      let builder = ImmutableArray.CreateBuilder()
+      let openBrace = matchToken OpenCurlyBraceToken
+      while currentKind () <> CloseCurlyBraceToken && currentKind () <> EndOfFileToken do
+        builder.Add(parseStatement ())
+      let closeBrace = matchToken CloseCurlyBraceToken
+      BlockStatement (openBrace, builder.ToImmutable(), closeBrace)
+
+    and parseDeclarationStatetement () =
+      let isMutable = currentKind () = LetKeyword
+      let declareToken =
+        if isMutable then matchToken LetKeyword
+        else matchToken DefKeyword
+      let identifier = matchToken (Identifier (current().Text))
+      let equalsToken = matchToken EqualsToken
+      let statement = parseStatement ()
+      DeclarationStatement(declareToken, identifier, equalsToken, statement)
+
+    and parseStatement () =
+      match currentKind () with
+      | OpenCurlyBraceToken -> parseBlockStatement ()
+      | LetKeyword | DefKeyword -> parseDeclarationStatetement ()
+      | _ -> ExpressionStatement (parseExpression ())
+
+    parseStatement (), matchToken(EndOfFileToken), diagnostics
+
+  let parseCompilationUnit text =
+    let (statement, endOfFileToken, diagnostics) = Parse text
+    (new CompilationUnit(statement, endOfFileToken), diagnostics)

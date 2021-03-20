@@ -3,7 +3,6 @@
 module Lexer =
   open Gloon.Syntax
   open Gloon.Syntax.Facts
-  open Gloon.Syntax.Parsing
 
   open Xunit
   open System.Linq
@@ -38,6 +37,8 @@ module Lexer =
       (TokenKind.DoublePipeToken, "||")
       (TokenKind.OpenParenToken, "(")
       (TokenKind.CloseParenToken, ")")
+      (TokenKind.OpenCurlyBraceToken, "{")
+      (TokenKind.CloseCurlyBraceToken, "}")
     ]
 
   let private GetWhiteSpaceTokens () = [
@@ -52,8 +53,8 @@ module Lexer =
 
   [<TheoryAttribute>]
   [<MemberData(nameof GetTokensData)>]
-  let ``Lexes Token`` (kind, text) =
-    let tokens = LexString(text)
+  let ``Lexes Token`` (kind, text: string) =
+    let tokens = SyntaxTree.Lex text
     Assert.Collection(tokens,
       System.Action<Token>(fun token ->
         Assert.Equal(kind, token.Kind)
@@ -105,8 +106,8 @@ module Lexer =
 
   [<Theory>]
   [<MemberData(nameof GetTokenPairsData)>]
-  let ``Lexes Token Pairs`` (t1kind, t1text, t2kind, t2text) =
-    let tokens = LexString(t1text + t2text)
+  let ``Lexes Token Pairs`` (t1kind, t1text: string, t2kind, t2text) =
+    let tokens = SyntaxTree.Lex (t1text + t2text)
     Assert.Collection(tokens,
       System.Action<Token>(fun token ->
         Assert.Equal(t1kind, token.Kind)
@@ -130,8 +131,8 @@ module Lexer =
 
   [<Theory>]
   [<MemberData(nameof GetTokenPairsWithWhiteSpaceData)>]
-  let ``Lexes Token Pairs With White Space`` (t1kind, t1text, wskind, wstext, t2kind, t2text) =
-    let tokens = LexString(t1text + wstext + t2text)
+  let ``Lexes Token Pairs With White Space`` (t1kind, t1text, wskind, wstext, t2kind, t2text: string) =
+    let tokens = SyntaxTree.Lex (t1text + wstext + t2text)
     Assert.Collection(tokens,
       System.Action<Token>(fun token ->
         Assert.Equal(t1kind, token.Kind)

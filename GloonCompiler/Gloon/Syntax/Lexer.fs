@@ -32,6 +32,8 @@ module internal Lexer =
     let getKeywordKind = function
     | "true" -> BooleanLiteralToken true
     | "false" -> BooleanLiteralToken false
+    | "let" -> LetKeyword
+    | "def" -> DefKeyword
     | a -> Identifier a
 
     let getKeywordValue str : obj = str |> function
@@ -66,6 +68,8 @@ module internal Lexer =
       | '>' ->                          move 1; kind <- GreaterThanToken
       | '(' ->                          move 1; kind <- OpenParenToken
       | ')' ->                          move 1; kind <- CloseParenToken
+      | '{' ->                          move 1; kind <- OpenCurlyBraceToken
+      | '}' ->                          move 1; kind <- CloseCurlyBraceToken
       | n when Char.IsNumber n -> consume Char.IsNumber <| fun () ->
         let res = ref 0
         if not (Int32.TryParse (GetText start, res))

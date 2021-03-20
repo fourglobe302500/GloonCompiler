@@ -34,6 +34,10 @@ module Facts =
       | Identifier i -> i
       | WhiteSpaceToken w -> w
       | InvallidToken i -> i
+
+      | LetKeyword -> "let"
+      | DefKeyword -> "def"
+
       | EndOfFileToken -> "\000"
       | IncrementToken -> "++"
       | PlusToken -> "+"
@@ -56,6 +60,8 @@ module Facts =
       | DoublePipeToken -> "||"
       | OpenParenToken -> "("
       | CloseParenToken -> ")"
+      | OpenCurlyBraceToken -> "{"
+      | CloseCurlyBraceToken -> "}"
 
     static member GetAll () = seq {
       NumberLiteralToken 0
@@ -85,6 +91,8 @@ module Facts =
       DoublePipeToken
       OpenParenToken
       CloseParenToken
+      OpenCurlyBraceToken
+      CloseCurlyBraceToken
     }
 
     static member GetBinaryOperators () =

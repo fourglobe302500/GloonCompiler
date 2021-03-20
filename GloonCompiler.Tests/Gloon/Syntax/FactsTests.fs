@@ -3,7 +3,6 @@
 module Facts =
   open Gloon.Syntax
   open Gloon.Syntax.Facts
-  open Gloon.Syntax.Parsing
 
   open Xunit
   open System
@@ -16,7 +15,7 @@ module Facts =
     let text = kind.Text
     if (text = null || kind = EndOfFileToken) then ()
     else
-      let tokens = LexString(text)
+      let tokens = SyntaxTree.Lex text
       Assert.Collection(tokens,
         Action<Token>(fun t ->
           Assert.Equal(kind, t.Kind)

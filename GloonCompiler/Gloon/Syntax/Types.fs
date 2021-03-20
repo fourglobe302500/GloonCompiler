@@ -1,8 +1,10 @@
 ﻿namespace Gloon.Syntax
 
 open Gloon.Text
+
 open System
 open System.IO
+open System.Collections.Immutable
 
 type TokenKind =
   | NumberLiteralToken    of int
@@ -10,6 +12,10 @@ type TokenKind =
   | Identifier            of string
   | WhiteSpaceToken       of string
   | InvallidToken         of string
+
+  | LetKeyword
+  | DefKeyword
+
   | EndOfFileToken
   | IncrementToken
   | PlusToken
@@ -32,6 +38,8 @@ type TokenKind =
   | DoublePipeToken
   | OpenParenToken
   | CloseParenToken
+  | OpenCurlyBraceToken
+  | CloseCurlyBraceToken
 
 type Token =
   {
@@ -50,8 +58,6 @@ type Token =
 
   override this.ToString () = this.Kind.ToString()
 
-[<CustomEquality>]
-[<CustomComparison>]
 type ExpressionSyntax =
   | ParenthesysExpression of OpenParen: Token * Expr: ExpressionSyntax * CloseParen: Token
   | LiteralExpression     of LiteralToken: Token
@@ -65,9 +71,9 @@ type ExpressionSyntax =
     match e with
     | LiteralExpression                      n  -> n.Span
     | IdentifierExpression                   i  -> i.Span
-    | AssignmentExpression         (i, e, expr) -> i.Span + expr.Span
-    | ParenthesysExpression        (op, e, cp)  -> op.Span + cp.Span
-    | BinaryExpression (left, operator, right)  -> left.Span + right.Span
+    | AssignmentExpression         (i, _, expr) -> i.Span + expr.Span
+    | ParenthesysExpression        (op, _, cp)  -> op.Span + cp.Span
+    | BinaryExpression        (left, _, right)  -> left.Span + right.Span
     | UnaryExpression      (operator, operand)  -> operator.Span + operand.Span
     | ErrorExpression                        e  -> e.Span
 
@@ -89,78 +95,83 @@ type ExpressionSyntax =
     | UnaryExpression        _ -> "Unary Expression"
     | ErrorExpression        _ -> "Error Expression"
 
-  member t.Match o =
-    match t, o with
-    | (ParenthesysExpression (o1,p1,c1)), (ParenthesysExpression (o2,p2,c2)) -> o1 = o2 && p1.Match(p2) && c1 = c2
-    | (LiteralExpression l1), (LiteralExpression l2) -> l1 = l2
-    | (IdentifierExpression i1), (IdentifierExpression i2) -> i1 = i2
-    | (AssignmentExpression (a1,eq1,ex1)), (AssignmentExpression (a2,eq2,ex2)) -> a1 = a2 && eq1 = eq2 && ex1.Match(ex2)
-    | (BinaryExpression (l1,o1,r1)), (BinaryExpression (l2,o2,r2)) -> l1.Match(l2) && o1 = o2 && r1.Match(r2)
-    | (UnaryExpression (o1,e1)), (UnaryExpression (o2,e2)) -> o1 = o2 && e1.Match(e2)
-    | (ErrorExpression e1), (ErrorExpression e2) -> e1 = e2
-    | _ -> false
+and CompilationUnit (root: StatementSyntax, endOfFileToken: Token) =
+  let root = root
+  let endOfFileToken = endOfFileToken
 
-  override x.Equals (y) =
-    match x, y with
-    | (ParenthesysExpression _), (:? ExpressionSyntax as p) -> match p with | ParenthesysExpression _ -> true | _ -> false
-    | (LiteralExpression _), (:? ExpressionSyntax as l) -> match l with | LiteralExpression _ -> true | _ -> false
-    | (IdentifierExpression _), (:? ExpressionSyntax as i) -> match i with | IdentifierExpression _ -> true | _ -> false
-    | (AssignmentExpression _), (:? ExpressionSyntax as a) -> match a with | AssignmentExpression _ -> true | _ -> false
-    | (BinaryExpression _), (:? ExpressionSyntax as b) -> match b with | BinaryExpression _ -> true | _ -> false
-    | (UnaryExpression _), (:? ExpressionSyntax as u) -> match u with | UnaryExpression _ -> true | _ -> false
-    | (ErrorExpression _), (:? ExpressionSyntax as e) -> match e with | ErrorExpression _ -> true | _ -> false
-    | _ -> false
+  member _.Root = root
+  member _.EndOfFileToken = endOfFileToken
+  member _.Span = root.Span
+  member _.Children = [Statement root; Token endOfFileToken]
 
-  override x.GetHashCode () = 0
+and StatementSyntax =
+  | BlockStatement of OpenCurlyBrace: Token * Statements: ImmutableArray<StatementSyntax> * CloseCurlyBrace: Token
+  | ExpressionStatement of Expression: ExpressionSyntax
+  | DeclarationStatement of DeclareToken: Token * Identifier: Token * Equals: Token * Statement: StatementSyntax
 
-  interface IComparable<ExpressionSyntax> with
-    member this.CompareTo(other: ExpressionSyntax): int = 0
+  member s.Span =
+    match s with
+    | BlockStatement          (o,_,c) -> o.Span + c.Span
+    | ExpressionStatement           e -> e.Span
+    | DeclarationStatement  (d,_,_,s) -> d.Span + s.Span
+
+  member s.Children =
+    match s with
+    | BlockStatement          (o,s,c) -> [
+      yield Token o
+      for statement in s do
+        yield Statement statement
+      yield Token c]
+    | ExpressionStatement           e -> [Expression e]
+    | DeclarationStatement  (d,i,e,s) -> [Token d; Token i; Token e; Statement s]
+
+  override s.ToString () =
+    match s with
+    | BlockStatement        _ -> "Block Statement"
+    | ExpressionStatement   _ -> "Expression Statement"
+    | DeclarationStatement  _ -> "Declaration Statement"
 
 and SyntaxNode =
-  | Expression    of ExpressionSyntax
-  | Token         of Token
-  | CST           of CST
+  | Statement       of StatementSyntax
+  | Expression      of ExpressionSyntax
+  | Token           of Token
+  | CompilationUnit of CompilationUnit
 
   member n.Span =
     match n with
+    | Statement s -> s.Span
     | Expression e -> e.Span
     | Token t -> t.Span
-    | CST t -> t.Span
+    | CompilationUnit t -> t.Span
 
-  member this.Children = this |> function
-    | Expression   e -> e.Children
-    | Token        _ -> []
-    | CST          t -> t.Children
+  member n.Children =
+    match n with
+    | Statement       s -> s.Children
+    | Expression      e -> e.Children
+    | Token           _ -> []
+    | CompilationUnit t -> t.Children
 
-  override this.ToString () = this |> function
-    | Expression   e -> e.ToString ()
-    | Token        t -> t.ToString ()
-    | CST          _ -> "Concrete Syntax Tree"
-
-  member t.Match o =
-    match t, o with
-    | Expression e1, Expression e2 -> e1.Match e2
-    | t, o -> t = o
+  override n.ToString () =
+    match n with
+    | Statement       s -> s.ToString ()
+    | Expression      e -> e.ToString ()
+    | Token           t -> t.ToString ()
+    | CompilationUnit _ -> "Compilation Unit"
 
   member node.WriteTo writer = node.PrettyPrint(writer, "", true, true)
 
   member private node.PrettyPrint (writer: TextWriter, indent, first, last) =
-    writer.WriteLine("{0}{1}{2}", indent, (if first then "" else if last then "└── " else "├── "), node)
+    let isToConsole = writer = Console.Out
+    if isToConsole then Console.ForegroundColor <- ConsoleColor.DarkGray
+    writer.Write("{0}{1}", indent, (if first then "" else if last then "└── " else "├── "))
+    if isToConsole then
+      Console.ForegroundColor <-
+        match node with
+        | Expression _ -> ConsoleColor.Cyan
+        | Statement _ -> ConsoleColor.DarkGreen
+        | Token _ -> ConsoleColor.Blue
+        | CompilationUnit _ -> ConsoleColor.Yellow
+    writer.WriteLine(node)
     let lastNode = node.Children |> List.tryLast
     node.Children |>
-    List.iter (fun n -> n.PrettyPrint(writer, indent + (if not last then "│   " else if first then "" else "    "), false, n.Match(lastNode.Value)))
-
-and CST (text: SourceText, root: ExpressionSyntax, endOfFileToken: Token, diagnostics: DiagnosticsBag) =
-  let text = text
-  let root = root
-  let endOfFileToken = endOfFileToken
-  let diagnostics = diagnostics
-
-  member _.Text = text
-  member _.Root = root
-  member _.Span = root.Span
-  member _.EndOfFileToken = endOfFileToken
-  member _.Diagnostics = diagnostics.Diagnostics
-  member _.Children = [Expression root; Token endOfFileToken]
-  member this.ToExpression () =
-      SyntaxNode.CST this
+    List.iter (fun n -> n.PrettyPrint(writer, indent + (if not last then "│   " else if first then "" else "    "), false, (n = lastNode.Value)))
